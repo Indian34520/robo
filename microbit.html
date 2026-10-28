@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: Platine – oben Status und Not-Stopp, darunter zwei Spalten (micro:bit & Ausgänge | Controller), dann Belegung, Programm, Anleitung. */
+/* Layout: Platine – oben Status und Not-Stopp, darunter zwei Spalten (micro:bit & Ausgänge | Controller & Tastatur), dann Belegung, Programm, Anleitung. */
 :root {
   --bg: #f1f5f2;
   --plate: #ffffff;
@@ -61,6 +61,8 @@ h1 { font-size: 2rem; } h2 { font-size: 1.35rem; } h3 { font-size: 1.05rem; }
 p { margin: 0; }
 .muted { color: var(--muted); } .small { font-size: .88rem; }
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.nav { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: .92rem; }
+.nav a { color: var(--blue); font-weight: 700; }
 
 .top { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
 .brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
@@ -78,11 +80,14 @@ button, select, input { font: inherit; color: inherit; }
 .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.25); }
 .btn.ghost { background: var(--plate); color: var(--ink); border: 2px solid var(--line); box-shadow: none; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
-.btn:focus-visible, select:focus-visible, input:focus-visible, .stop:focus-visible, summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+.btn:focus-visible, select:focus-visible, input:focus-visible, .stop:focus-visible, summary:focus-visible, .seg button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .stop { appearance: none; border: 0; cursor: pointer; background: var(--red); color: var(--red-ink); font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; letter-spacing: .04em; padding: 14px 26px; border-radius: 18px; box-shadow: 0 5px 0 rgba(0,0,0,.3); display: inline-flex; align-items: center; gap: 12px; touch-action: manipulation; }
 .stop:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.3); }
 .stop .oct { width: 26px; height: 26px; background: var(--red-ink); clip-path: polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%); }
 .stop.locked { outline: 4px solid var(--warn); }
+.seg { display: inline-flex; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; flex-wrap: wrap; }
+.seg button { border: 0; background: var(--bg); padding: 9px 14px; cursor: pointer; font-weight: 700; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
 .plate { background: var(--plate); border: 2px solid var(--line); border-radius: 20px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -105,9 +110,16 @@ button, select, input { font: inherit; color: inherit; }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .key { min-width: 46px; padding: 6px 10px; text-align: center; border-radius: 10px; border: 2px solid var(--line); font-weight: 700; font-family: var(--font-display); background: var(--bg); }
 .key.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.kbd { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: center; border-top: 2px solid var(--line); padding-top: 12px; }
+.wasd { display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: 40px 40px; gap: 4px; }
+.wasd .key { min-width: 0; padding: 0; display: grid; place-items: center; }
+.wasd .w { grid-column: 2; } .wasd .a { grid-column: 1; grid-row: 2; } .wasd .s { grid-column: 2; grid-row: 2; } .wasd .d { grid-column: 3; grid-row: 2; }
+.legend { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: .88rem; min-width: 0; }
+.legend b { font-family: var(--font-mono); font-size: .82rem; }
 
 .outs { display: grid; gap: 10px; }
-.mrow { display: grid; grid-template-columns: 8.5rem 1fr 3.6rem; gap: 10px; align-items: center; }
+.mrow { display: grid; grid-template-columns: 9.5rem 1fr 3.6rem; gap: 10px; align-items: center; }
+.mrow.off { opacity: .4; }
 .mbar { height: 22px; border-radius: 11px; background: var(--bg); border: 2px solid var(--line); position: relative; overflow: hidden; }
 .mbar::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--line); }
 .mbar > i { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; background: var(--accent); }
@@ -117,9 +129,14 @@ button, select, input { font: inherit; color: inherit; }
 .grid-set { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
 label.f, div.f { display: grid; gap: 4px; font-weight: 700; font-size: .95rem; }
 select { border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--bg); min-width: 0; width: 100%; }
+input[type="number"] { border: 2px solid var(--line); border-radius: 10px; padding: 6px 8px; background: var(--bg); width: 5rem; }
 input[type="range"] { width: 100%; accent-color: var(--accent); }
 .check { display: flex; align-items: center; gap: 8px; font-weight: 400; }
 .check input { width: 22px; height: 22px; accent-color: var(--accent); }
+.mtab { display: grid; gap: 8px; }
+.mline { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.pose { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-weight: 400; }
+.sub { border-top: 2px solid var(--line); padding-top: 12px; display: grid; gap: 12px; }
 
 pre { margin: 0; background: var(--code-bg); border-radius: 12px; padding: 12px 14px; overflow-x: auto; font: 13px/1.5 var(--font-mono); max-height: 380px; }
 .log { background: var(--code-bg); border-radius: 12px; padding: 10px 12px; font: 12.5px/1.45 var(--font-mono); height: 110px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
@@ -131,12 +148,13 @@ ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-wi
 <body>
 
 <div class="wrap">
+  <nav class="nav" id="siteNav" hidden><a href="index.html">← Alle Fahrzeuge</a><a href="lego.html">LEGO SPIKE Prime</a></nav>
   <header class="top">
     <div class="brand">
       <div class="mb" aria-hidden="true" id="mbLogo"></div>
       <div>
         <h1>micro:bit Fernsteuerung</h1>
-        <p class="muted small">micro:bit · SG-EMIB-01A · Xbox-Controller · iPad</p>
+        <p class="muted small" id="subTitle">micro:bit · Xbox-Controller oder Tastatur</p>
       </div>
     </div>
     <div class="chips" aria-live="polite">
@@ -152,15 +170,18 @@ ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-wi
     <section class="plate" aria-labelledby="hBit">
       <h2 id="hBit">micro:bit</h2>
       <div class="row">
+        <span class="muted small">Platine:</span>
+        <div class="seg" role="group" aria-label="Platine">
+          <button type="button" id="boardSg" aria-pressed="true">SG-EMIB-01A</button>
+          <button type="button" id="boardOmni" aria-pressed="false">Omni:bit</button>
+        </div>
+      </div>
+      <div class="row">
         <button class="btn" id="btnConnect" type="button">micro:bit verbinden</button>
         <button class="btn ghost" id="btnDisconnect" type="button" disabled>Trennen</button>
       </div>
       <p class="small muted">micro:bit nicht in der Liste? <button class="btn ghost" id="btnShowAll" type="button" style="padding:6px 12px;font-size:.95rem">Alle Bluetooth-Geräte zeigen</button></p>
-      <div class="outs">
-        <div class="mrow"><span><span class="tag" id="tgDrive">M2_A</span>Fahren</span><div class="mbar"><i id="bDrive"></i></div><span class="mval" id="vDrive">0</span></div>
-        <div class="mrow"><span><span class="tag" id="tgSteer">S1</span>Lenken</span><div class="mbar"><i id="bSteer"></i></div><span class="mval" id="vSteer">90°</span></div>
-        <div class="mrow"><span><span class="tag" id="tgExtra">aus</span>Extra</span><div class="mbar"><i id="bExtra"></i></div><span class="mval" id="vExtra">0</span></div>
-      </div>
+      <div class="outs" id="outs"></div>
       <div class="log" id="log" aria-label="Meldungen"></div>
     </section>
 
@@ -178,54 +199,85 @@ ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-wi
         <span class="key" data-k="4">LB</span><span class="key" data-k="5">RB</span><span class="key" data-k="12">▲</span><span class="key" data-k="13">▼</span><span class="key" data-k="14">◀</span><span class="key" data-k="15">▶</span>
       </div>
       <label class="check small"><input type="checkbox" id="touchMode"> Ohne Controller: Sticks mit dem Finger bedienen</label>
+      <label class="check small"><input type="checkbox" id="kbdMode"> Mit der Tastatur fahren (WASD)</label>
+      <div class="kbd" id="kbdBox">
+        <div class="wasd" aria-hidden="true">
+          <span class="key w" id="kW">W</span><span class="key a" id="kA">A</span><span class="key s" id="kS">S</span><span class="key d" id="kD">D</span>
+        </div>
+        <ul class="legend">
+          <li><b>W S</b> vor, zurück · <b>A D</b> lenken (auch Pfeiltasten)</li>
+          <li><b>R F</b> Extra-Motor vor, zurück</li>
+          <li><b>1–6</b> wie Tasten A, B, X, Y, LB, RB</li>
+          <li><b>Leertaste</b> Not-Stopp / weiter</li>
+        </ul>
+      </div>
     </section>
   </div>
 
   <section class="plate" aria-labelledby="hMap">
     <h2 id="hMap">Belegung</h2>
+    <h3 id="hMotors">Motoren an der Platine</h3>
+    <p class="small muted" style="max-width:70ch">Für jeden Anschluss wählen, was der Motor tun soll. „Fahren“ dreht immer gleich mit dem Gas. „Links“ und „Rechts“ werden in Kurven verschieden schnell. „Extra“ ist für Arm, Greifer oder Seilwinde.</p>
+    <div class="mtab" id="motorTable"></div>
     <div class="grid-set">
-      <label class="f">Gas geben mit
-        <select id="gasSrc">
-          <option value="ly">Linker Stick hoch/runter</option>
-          <option value="trig">Trigger: RT vor, LT zurück</option>
-          <option value="ry">Rechter Stick hoch/runter</option>
-        </select></label>
-      <label class="f">Lenken mit
-        <select id="steerSrc">
-          <option value="lx">Linker Stick links/rechts</option>
-          <option value="rx">Rechter Stick links/rechts</option>
-        </select></label>
-      <label class="f">Fahrmotor an
-        <select id="driveMotor"></select></label>
       <label class="f">Lenkservo an
         <select id="steerServo"></select></label>
-      <label class="f">Extra-Motor an
-        <select id="extraMotor"></select></label>
-      <label class="f">Extra-Motor steuern mit
-        <select id="extraSrc">
-          <option value="trig">Trigger: RT vor, LT zurück</option>
-          <option value="ry">Rechter Stick hoch/runter</option>
-        </select></label>
-      <label class="f">Höchstes Tempo: <span id="maxV" class="mono"></span>
-        <input type="range" id="maxSpeed" min="20" max="100" step="5"></label>
       <label class="f">Lenkung Mitte: <span id="centerV" class="mono"></span>
         <input type="range" id="steerCenter" min="45" max="135" step="1"></label>
       <label class="f">Lenkung Ausschlag: <span id="rangeV" class="mono"></span>
-        <input type="range" id="steerRange" min="15" max="90" step="5"></label>
-      <div class="f">Richtung umdrehen
-        <label class="check"><input type="checkbox" id="invDrive"> Fahrmotor</label>
-        <label class="check"><input type="checkbox" id="invSteer"> Lenkung</label>
-        <label class="check"><input type="checkbox" id="invExtra"> Extra-Motor</label>
+        <input type="range" id="steerRange" min="10" max="90" step="5"></label>
+      <label class="f">Kurven über Motoren links/rechts: <span id="mixV" class="mono"></span>
+        <input type="range" id="turnMix" min="0" max="100" step="5"></label>
+      <div class="f">Lenkung umdrehen
+        <label class="check"><input type="checkbox" id="invSteer"> Lenkservo andersherum</label>
       </div>
     </div>
-    <h3>Tasten</h3>
-    <div class="grid-set" id="btnMap"></div>
-    <p class="small muted">Wenn Gas und Extra-Motor beide auf den Triggern liegen, gewinnt das Gas.</p>
+    <p class="small muted" style="max-width:70ch">Kurven über Motoren: Mit Lenkservo wird das innere Rad etwas langsamer. Ohne Lenkservo (wie ein Panzer) drehen die Seiten gegeneinander, bei 100 % dreht er auf der Stelle.</p>
+
+    <div class="sub">
+      <h3>Arm oder Greifer (Servos)</h3>
+      <div class="grid-set">
+        <label class="f">Arm-Servo 1 an <select id="armA"></select></label>
+        <label class="f">Arm-Servo 2 an <select id="armB"></select></label>
+        <div class="f">Stellung 1
+          <span class="pose"><label>Servo 1 <input type="number" id="p1a" min="0" max="270"></label><label>Servo 2 <input type="number" id="p1b" min="0" max="270"></label></span></div>
+        <div class="f">Stellung 2
+          <span class="pose"><label>Servo 1 <input type="number" id="p2a" min="0" max="270"></label><label>Servo 2 <input type="number" id="p2b" min="0" max="270"></label></span></div>
+      </div>
+      <p class="small muted">Eine Taste auf „Arm: Stellung 1“ oder „Stellung 2“ legen. Die Zahlen sind Winkel in Grad.</p>
+    </div>
+
+    <div class="sub">
+      <h3>Controller</h3>
+      <div class="grid-set">
+        <label class="f">Gas geben mit
+          <select id="gasSrc">
+            <option value="ly">Linker Stick hoch/runter</option>
+            <option value="trig">Trigger: RT vor, LT zurück</option>
+            <option value="ry">Rechter Stick hoch/runter</option>
+          </select></label>
+        <label class="f">Lenken mit
+          <select id="steerSrc">
+            <option value="lx">Linker Stick links/rechts</option>
+            <option value="rx">Rechter Stick links/rechts</option>
+          </select></label>
+        <label class="f">Extra-Motor steuern mit
+          <select id="extraSrc">
+            <option value="trig">Trigger: RT vor, LT zurück</option>
+            <option value="ry">Rechter Stick hoch/runter</option>
+          </select></label>
+        <label class="f">Höchstes Tempo: <span id="maxV" class="mono"></span>
+          <input type="range" id="maxSpeed" min="20" max="100" step="5"></label>
+      </div>
+      <h3>Tasten</h3>
+      <div class="grid-set" id="btnMap"></div>
+      <p class="small muted">Wenn Gas und Extra-Motor beide auf den Triggern liegen, gewinnt das Gas. Auf der Tastatur sind 1–6 dieselben Tasten.</p>
+    </div>
   </section>
 
   <section class="plate" aria-labelledby="hProg">
     <h2 id="hProg">Programm für den micro:bit</h2>
-    <p class="small" style="max-width:70ch">Dein jetziges Projekt „Lijo Motortreiber“ hört auf <b>Funk</b> (Gruppe 33). Eine Webseite kann aber nur über <b>Bluetooth</b> mit dem micro:bit reden, und MakeCode erlaubt Funk und Bluetooth nicht gleichzeitig. Die SG-EMIB-01A-Erweiterung bringt den Funk selbst mit. Deshalb steuert dieses Programm die Platine direkt an und braucht nur die Bluetooth-Erweiterung. Am besten als <b>neues Projekt</b> anlegen, dann bleibt das alte für die Funk-Fernbedienung erhalten.</p>
+    <p class="small" style="max-width:70ch" id="progIntro"></p>
     <div class="row"><button class="btn ghost" id="btnCopy" type="button">Programm kopieren</button><span class="small muted" id="copyMsg" aria-live="polite"></span></div>
     <pre id="progCode"></pre>
   </section>
@@ -233,13 +285,14 @@ ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-wi
   <section class="plate" aria-labelledby="hHelp">
     <h2 id="hHelp">So geht's</h2>
     <details open>
-      <summary>1. Programm auf den micro:bit laden (einmal)</summary>
+      <summary>1. Programm auf den micro:bit laden (einmal pro Platine)</summary>
       <ol class="steps">
+        <li>Oben die richtige <b>Platine</b> wählen (SG-EMIB-01A oder Omni:bit). Das Programm unten passt sich an.</li>
         <li><a href="https://makecode.microbit.org" target="_blank" rel="noopener">makecode.microbit.org</a> öffnen und <b>Neues Projekt</b> anlegen, Name zum Beispiel „Lijo Bluetooth“.</li>
-        <li>Unten bei den Blöcken auf <b>Erweiterungen</b> tippen, <b>bluetooth</b> suchen und hinzufügen. Fragt MakeCode, ob „radio“ entfernt werden soll: Ja.</li>
-        <li>Oben von <b>Blöcke</b> auf <b>JavaScript</b> umschalten, alles löschen und das Programm von oben einfügen.</li>
-        <li>Zahnrad oben rechts → <b>Projekteinstellungen</b> → <b>„Keine Kopplung erforderlich“</b> (No Pairing Required) einschalten und speichern. Ohne das klappt die Verbindung mit dem iPad meistens nicht.</li>
-        <li><b>Herunterladen</b> und auf den micro:bit ziehen, wie bei deinem alten Programm. Danach zeigt er ein kleines Quadrat.</li>
+        <li>Unten bei den Blöcken auf <b>Erweiterungen</b> tippen, <b>bluetooth</b> suchen und hinzufügen. Fragt MakeCode, ob „radio“ entfernt werden soll: Ja. Die Erweiterung der Platine brauchst du nicht.</li>
+        <li>Oben von <b>Blöcke</b> auf <b>JavaScript</b> umschalten, alles löschen und das Programm einfügen.</li>
+        <li>Zahnrad oben rechts → <b>Projekteinstellungen</b> → <b>„Keine Kopplung erforderlich“</b> (No Pairing Required) einschalten und speichern.</li>
+        <li><b>Herunterladen</b> und auf den micro:bit ziehen. Danach zeigt er ein kleines Quadrat.</li>
       </ol>
     </details>
     <details>
@@ -248,23 +301,20 @@ ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-wi
         <li>Am iPad: <b>Einstellungen → Bluetooth</b>.</li>
         <li>Xbox-Taste drücken, dann die kleine <b>Pairing-Taste</b> oben am Controller 3 Sekunden halten, bis die Xbox-Taste schnell blinkt.</li>
         <li>„Xbox Wireless Controller“ antippen.</li>
+        <li>Ohne Controller geht es auch mit einer Bluetooth-Tastatur am iPad oder am Computer: <b>W A S D</b>.</li>
       </ol>
     </details>
     <details>
       <summary>3. Browser und Verbinden</summary>
       <ol class="steps">
-        <li>Safari kann kein Bluetooth für Webseiten. Diese Seite in der App <b>Bluefy – Web BLE Browser</b> öffnen.</li>
+        <li>Safari kann kein Bluetooth für Webseiten. Diese Seite in der App <b>Bluefy – Web BLE Browser</b> öffnen. Am Computer geht Chrome oder Edge.</li>
         <li>Platine einschalten, „micro:bit verbinden“ tippen und „BBC micro:bit […]“ wählen. Der micro:bit zeigt dann einen Haken.</li>
         <li>Zeigt der Controller-Punkt oben grau, obwohl er gekoppelt ist: Haken bei „Sticks mit dem Finger bedienen“ setzen.</li>
       </ol>
     </details>
     <details>
       <summary>4. Wo hängt was an der Platine?</summary>
-      <ol class="steps">
-        <li>Wie in deinem Projekt: Fahrmotor an <b>M2_A</b>, Lenkservo an <b>S1</b>. Ein dritter Motor kann an M1_A, M1_B oder M2_B.</li>
-        <li>Fährt das Auto bei „Stick hoch“ rückwärts, bei „Richtung umdrehen“ den Haken beim Fahrmotor ändern. Steht die Lenkung nicht gerade, „Lenkung Mitte“ verschieben.</li>
-        <li>Not-Stopp: roter Knopf, Taste B oder die Verbindung trennen. Kommt fast eine Sekunde nichts an, hält der Motor von selbst an.</li>
-      </ol>
+      <ol class="steps" id="wiringHelp"></ol>
     </details>
   </section>
 </div>
@@ -272,7 +322,91 @@ ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-wi
 <script>
 (() => {
   "use strict";
-  const PROGRAM = `// micro:bit Fernsteuerung – Empfänger über Bluetooth für SG-EMIB-01A
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- Platinen ----------
+  // SG-EMIB-01A: Motoren auf Kanal 0–7, Servos S1–S8 auf Kanal 8–15, Winkel 0–270°.
+  // Omni:bit (Yahboom): Servos S1–S8 auf Kanal 0–7 (0–180°), Motoren M1–M4 auf Kanal 8–15.
+  const BOARDS = {
+    sg: {
+      name: "SG-EMIB-01A", maxDeg: 270,
+      motors: ["M1_A", "M1_B", "M2_A", "M2_B"],
+      motorFn: `// Motor 1=M1_A 2=M1_B 3=M2_A 4=M2_B, Tempo -100..100
+function motor(m: number, speed: number) {
+    if (m < 1 || m > 4) return
+    const v = Math.min(4095, Math.idiv(Math.abs(speed) * 4095, 100))
+    const a = (m - 1) * 2
+    if (speed >= 0) {
+        pwm(a, 0)
+        pwm(a + 1, v)
+    } else {
+        pwm(a, v)
+        pwm(a + 1, 0)
+    }
+}
+// Servo 1..8 = S1..S8, Winkel wie in der SG-EMIB-01A-Erweiterung (0..270)
+function servo(s: number, deg: number) {
+    if (s < 1 || s > 8) return
+    const us = Math.idiv(deg * 1800, 270) + 600
+    pwm(s + 7, Math.idiv(us * 4096, 20000))
+}`,
+      intro: "Dein Projekt „Lijo Motortreiber“ hört auf <b>Funk</b>. Eine Webseite kann aber nur über <b>Bluetooth</b> mit dem micro:bit reden, und MakeCode erlaubt Funk und Bluetooth nicht gleichzeitig. Die SG-EMIB-01A-Erweiterung bringt den Funk selbst mit. Deshalb steuert dieses Programm die Platine direkt an und braucht nur die Bluetooth-Erweiterung. Am besten als <b>neues Projekt</b> anlegen, dann bleibt das alte erhalten.",
+      wiring: [
+        "Wie in deinem Projekt „Lijo Motortreiber“: Fahrmotor an <b>M2_A</b>, Lenkservo an <b>S1</b>. Weitere Motoren an M1_A, M1_B oder M2_B, dann oben bei „Motoren“ einstellen.",
+        "Fährt das Auto bei „Stick hoch“ oder <b>W</b> rückwärts: beim Motor den Haken „umdrehen“ ändern. Steht die Lenkung nicht gerade: „Lenkung Mitte“ verschieben.",
+      ],
+      defaults: {
+        motors: [{ role: "off", inv: false }, { role: "off", inv: false }, { role: "drive", inv: true }, { role: "off", inv: false }],
+        steerServo: 1, steerCenter: 90, steerRange: 90, invSteer: false, turnMix: 0,
+        armA: 0, armB: 0, pose1: [90, 90], pose2: [90, 90],
+        btn: { 0: "honk", 1: "stop", 2: "1", 3: "2", 4: "lo", 5: "hi" },
+      },
+    },
+    omni: {
+      name: "Omni:bit", maxDeg: 180,
+      motors: ["M1", "M2", "M3", "M4"],
+      motorFn: `// Motor 1..4 = M1..M4, Tempo -100..100.
+// Richtung wie in der OmniBit-Erweiterung (M3 und M4 sind dort gespiegelt).
+function motor(m: number, speed: number) {
+    if (m < 1 || m > 4) return
+    const v = Math.min(4095, Math.idiv(Math.abs(speed) * 4095, 100))
+    const a = 6 + m * 2
+    let fwd = a + 1
+    let back = a
+    if (m >= 3) {
+        fwd = a
+        back = a + 1
+    }
+    if (speed >= 0) {
+        pwm(back, 0)
+        pwm(fwd, v)
+    } else {
+        pwm(fwd, 0)
+        pwm(back, v)
+    }
+}
+// Servo 1..8 = S1..S8, Winkel wie in der OmniBit-Erweiterung (0..180)
+function servo(s: number, deg: number) {
+    if (s < 1 || s > 8) return
+    const us = Math.idiv(deg * 1800, 180) + 600
+    pwm(s - 1, Math.idiv(us * 4096, 20000))
+}`,
+      intro: "Dein Projekt „Lijo 6 Räder“ hört auf <b>Funk</b> (Gruppe 5). Eine Webseite kann aber nur über <b>Bluetooth</b> mit dem micro:bit reden, und MakeCode erlaubt Funk und Bluetooth nicht gleichzeitig. Dieses Programm steuert die Omni:bit-Platine direkt an, genau wie die OmniBit-Erweiterung, und braucht nur die Bluetooth-Erweiterung. Am besten als <b>neues Projekt</b> anlegen, dann bleibt das alte erhalten.",
+      wiring: [
+        "Wie in deinem Projekt „Lijo 6 Räder“: Fahrmotoren an <b>M1</b> und <b>M2</b> (links) und <b>M3</b> und <b>M4</b> (rechts), Lenkservo an <b>S8</b>, Greifer-Servos an <b>S1</b> und <b>S2</b>.",
+        "Dein altes Programm fuhr bei „hoch“ mit Tempo −255, darum ist bei allen vier Motoren „umdrehen“ schon an. Fährt er trotzdem rückwärts: Haken wegnehmen.",
+        "Lenkung: Mitte 90°, links 55°, rechts 125°, also Ausschlag ± 35°. Kurven über Motoren 20 % macht das innere Rad etwas langsamer, wie bei deinem Programm.",
+      ],
+      defaults: {
+        motors: [{ role: "left", inv: true }, { role: "left", inv: true }, { role: "right", inv: true }, { role: "right", inv: true }],
+        steerServo: 8, steerCenter: 90, steerRange: 35, invSteer: false, turnMix: 20,
+        armA: 1, armB: 2, pose1: [30, 150], pose2: [90, 90],
+        btn: { 0: "honk", 1: "stop", 2: "p1", 3: "p2", 4: "lo", 5: "hi" },
+      },
+    },
+  };
+
+  const programFor = (bd) => `// micro:bit Fernsteuerung – Empfänger über Bluetooth für ${bd.name}
 // Steuert den PCA9685 auf der Platine direkt (I2C 0x40), ohne Funk.
 const PCA = 0x40
 let ready = false
@@ -307,25 +441,7 @@ function init() {
     for (let i = 0; i < 16; i++) pwm(i, 0)
     ready = true
 }
-// Motor 1=M1_A 2=M1_B 3=M2_A 4=M2_B, Tempo -100..100
-function motor(m: number, speed: number) {
-    if (m < 1 || m > 4) return
-    const v = Math.min(4095, Math.idiv(Math.abs(speed) * 4095, 100))
-    const a = (m - 1) * 2
-    if (speed >= 0) {
-        pwm(a, 0)
-        pwm(a + 1, v)
-    } else {
-        pwm(a, v)
-        pwm(a + 1, 0)
-    }
-}
-// Servo 1..8 = S1..S8, Winkel wie in der SG-EMIB-01A-Erweiterung
-function servo(s: number, deg: number) {
-    if (s < 1 || s > 8) return
-    const us = Math.idiv(deg * 1800, 270) + 600
-    pwm(s + 7, Math.idiv(us * 4096, 20000))
-}
+${bd.motorFn}
 function stopAll() {
     for (let m = 1; m <= 4; m++) motor(m, 0)
     moving = false
@@ -338,11 +454,11 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () 
     if (!ready) init()
     lastCmd = control.millis()
     const c = p[0]
-    if (c == "C" && p.length >= 7) {   // C,Motor,Tempo,Servo,Winkel,Motor2,Tempo2
-        motor(parseInt(p[1]), parseInt(p[2]))
-        servo(parseInt(p[3]), parseInt(p[4]))
-        motor(parseInt(p[5]), parseInt(p[6]))
+    if (c == "D" && p.length >= 5) {   // D,M1,M2,M3,M4 (Tempo je Motor)
+        for (let m = 1; m <= 4; m++) motor(m, parseInt(p[m]))
         moving = true
+    } else if (c == "V" && p.length >= 3) {   // V,Servo,Winkel
+        servo(parseInt(p[1]), parseInt(p[2]))
     } else if (c == "S") {   // Not-Stopp
         stopAll()
         basic.showIcon(IconNames.No, 0)
@@ -379,66 +495,120 @@ basic.forever(function () {
     basic.pause(50)
 })
 `;
-  const $ = (id) => document.getElementById(id);
-  $("progCode").textContent = PROGRAM;
+  window.__mbProgram = programFor;
+  window.__mbBoards = BOARDS;
   $("mbLogo").innerHTML = Array.from({ length: 25 }, (_, i) => `<i class="${[6, 8, 15, 19, 21, 22, 23].includes(i) ? "on" : ""}"></i>`).join("");
+  if (!/claudeusercontent\.com$/.test(location.hostname)) $("siteNav").hidden = false;
 
   // ---------- Einstellungen ----------
-  const MOTORS = [[1, "M1_A"], [2, "M1_B"], [3, "M2_A"], [4, "M2_B"]];
+  const ROLES = [["off", "aus"], ["drive", "Fahren"], ["left", "Fahren links"], ["right", "Fahren rechts"], ["extra", "Extra"]];
+  const ROLE_SHORT = { off: "aus", drive: "Fahren", left: "Links", right: "Rechts", extra: "Extra" };
   const SERVOS = Array.from({ length: 8 }, (_, i) => [i + 1, "S" + (i + 1)]);
   const ACTIONS = [
     ["none", "nichts"], ["stop", "Not-Stopp"], ["honk", "Hupe"], ["hi", "Ton hoch"], ["lo", "Ton tief"],
+    ["p1", "Arm: Stellung 1"], ["p2", "Arm: Stellung 2"],
     ["1", "Herz zeigen"], ["2", "Lachgesicht"], ["3", "Traurig"], ["4", "Haken"], ["0", "Anzeige aus"],
   ];
   const MAPPABLE = [[0, "A"], [1, "B"], [2, "X"], [3, "Y"], [4, "LB"], [5, "RB"]];
-  const DEFAULTS = {
-    gasSrc: "ly", steerSrc: "lx", driveMotor: 3, steerServo: 1, extraMotor: 0, extraSrc: "trig",
-    maxSpeed: 100, steerCenter: 90, steerRange: 90, invDrive: true, invSteer: false, invExtra: false, touch: false,
-    btn: { 0: "honk", 1: "stop", 2: "1", 3: "2", 4: "lo", 5: "hi" },
-  };
-  let S = JSON.parse(JSON.stringify(DEFAULTS));
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  const COMMON = { board: "sg", gasSrc: "ly", steerSrc: "lx", extraSrc: "trig", maxSpeed: 100, touch: false, kbd: true };
+  let S = Object.assign(clone(COMMON), { cfg: { sg: clone(BOARDS.sg.defaults), omni: clone(BOARDS.omni.defaults) } });
   try {
-    const saved = JSON.parse(localStorage.getItem("mb-settings") || "null");
-    if (saved) S = Object.assign(S, saved, { btn: Object.assign({}, DEFAULTS.btn, saved.btn || {}) });
+    const saved = JSON.parse(localStorage.getItem("mb-settings-2") || "null");
+    if (saved) {
+      for (const k of Object.keys(COMMON)) if (k in saved) S[k] = saved[k];
+      for (const b of Object.keys(BOARDS)) if (saved.cfg && saved.cfg[b]) {
+        S.cfg[b] = Object.assign(S.cfg[b], saved.cfg[b], { btn: Object.assign({}, BOARDS[b].defaults.btn, saved.cfg[b].btn || {}) });
+      }
+    }
   } catch (e) {}
-  const save = () => { try { localStorage.setItem("mb-settings", JSON.stringify(S)); } catch (e) {} };
+  const fromHash = location.hash.replace("#", "");
+  if (BOARDS[fromHash]) S.board = fromHash;
+  const save = () => { try { localStorage.setItem("mb-settings-2", JSON.stringify(S)); } catch (e) {} };
+  const C = () => S.cfg[S.board];
+  const B = () => BOARDS[S.board];
 
   const opts = (list, withOff) => (withOff ? `<option value="0">aus</option>` : "") + list.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
-  $("driveMotor").innerHTML = opts(MOTORS, false);
-  $("steerServo").innerHTML = opts(SERVOS, true);
-  $("extraMotor").innerHTML = opts(MOTORS, true);
-  $("btnMap").innerHTML = MAPPABLE.map(([k, n]) =>
-    `<label class="f">Taste ${n}<select id="map${k}">${ACTIONS.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select></label>`).join("");
+  for (const id of ["steerServo", "armA", "armB"]) $(id).innerHTML = opts(SERVOS, true);
+  $("btnMap").innerHTML = MAPPABLE.map(([k, n], i) =>
+    `<label class="f">Taste ${n} (Tastatur ${i + 1})<select id="map${k}">${ACTIONS.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select></label>`).join("");
 
-  const nameOf = (list, v) => (list.find(([x]) => x === v) || [0, "aus"])[1];
+  function renderBoard() {
+    const bd = B(), c = C();
+    $("boardSg").setAttribute("aria-pressed", S.board === "sg");
+    $("boardOmni").setAttribute("aria-pressed", S.board === "omni");
+    $("subTitle").textContent = `micro:bit · ${bd.name} · Xbox-Controller oder Tastatur`;
+    $("hMotors").textContent = `Motoren an der ${bd.name}`;
+    $("motorTable").innerHTML = bd.motors.map((n, i) =>
+      `<div class="mline"><span class="tag">${n}</span><select id="role${i}" aria-label="Motor ${n}">${ROLES.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>` +
+      `<label class="check small"><input type="checkbox" id="inv${i}"> umdrehen</label></div>`).join("");
+    bd.motors.forEach((n, i) => {
+      $("role" + i).value = c.motors[i].role;
+      $("inv" + i).checked = c.motors[i].inv;
+      $("role" + i).addEventListener("change", () => { c.motors[i].role = $("role" + i).value; save(); renderOuts(); });
+      $("inv" + i).addEventListener("change", () => { c.motors[i].inv = $("inv" + i).checked; save(); });
+    });
+    $("outs").innerHTML = bd.motors.map((n, i) =>
+      `<div class="mrow" id="orow${i}"><span><span class="tag">${n}</span><span id="orole${i}"></span></span><div class="mbar"><i id="ob${i}"></i></div><span class="mval" id="ov${i}">0</span></div>`).join("") +
+      `<div class="mrow" id="orowS"><span><span class="tag" id="otagS">S1</span>Lenken</span><div class="mbar"><i id="obS"></i></div><span class="mval" id="ovS">90°</span></div>`;
+    for (const id of ["steerServo", "armA", "armB"]) $(id).value = c[id];
+    for (const id of ["steerCenter", "steerRange", "turnMix"]) $(id).value = c[id];
+    $("invSteer").checked = c.invSteer;
+    [["p1a", "pose1", 0], ["p1b", "pose1", 1], ["p2a", "pose2", 0], ["p2b", "pose2", 1]].forEach(([id, k, j]) => { $(id).value = c[k][j]; $(id).max = bd.maxDeg; });
+    for (const [k] of MAPPABLE) $("map" + k).value = c.btn[k] || "none";
+    $("progCode").textContent = programFor(bd);
+    $("progIntro").innerHTML = bd.intro;
+    $("wiringHelp").innerHTML = bd.wiring.concat(["Not-Stopp: roter Knopf, Taste B, Leertaste oder die Verbindung trennen. Kommt fast eine Sekunde nichts an, halten die Motoren von selbst an."]).map((t) => `<li>${t}</li>`).join("");
+    renderOuts(); refreshLabels();
+    lastD = ""; lastV = "";
+  }
+  function renderOuts() {
+    const bd = B(), c = C();
+    bd.motors.forEach((n, i) => {
+      $("orole" + i).textContent = ROLE_SHORT[c.motors[i].role];
+      $("orow" + i).classList.toggle("off", c.motors[i].role === "off");
+    });
+    $("otagS").textContent = c.steerServo ? "S" + c.steerServo : "aus";
+    $("orowS").classList.toggle("off", !c.steerServo);
+  }
   function refreshLabels() {
+    const c = C();
     $("maxV").textContent = S.maxSpeed + " %";
-    $("centerV").textContent = S.steerCenter + "°";
-    $("rangeV").textContent = "± " + S.steerRange + "°";
-    $("tgDrive").textContent = nameOf(MOTORS, S.driveMotor);
-    $("tgSteer").textContent = nameOf(SERVOS, S.steerServo);
-    $("tgExtra").textContent = nameOf(MOTORS, S.extraMotor);
+    $("centerV").textContent = c.steerCenter + "°";
+    $("rangeV").textContent = "± " + c.steerRange + "°";
+    $("mixV").textContent = c.turnMix + " %";
+  }
+  function setBoard(b) {
+    if (b === S.board) return;
+    S.board = b; save(); renderBoard();
+    log(`Platine: ${B().name}. Zum Fahren muss das passende Programm auf dem micro:bit sein.`);
   }
   function bindSettings() {
+    $("boardSg").addEventListener("click", () => setBoard("sg"));
+    $("boardOmni").addEventListener("click", () => setBoard("omni"));
     for (const id of ["gasSrc", "steerSrc", "extraSrc"]) {
       $(id).value = S[id];
       $(id).addEventListener("change", () => { S[id] = $(id).value; save(); });
     }
-    for (const id of ["driveMotor", "steerServo", "extraMotor", "maxSpeed", "steerCenter", "steerRange"]) {
-      $(id).value = S[id];
-      $(id).addEventListener(id.startsWith("max") || id.startsWith("steerC") || id.startsWith("steerR") ? "input" : "change",
-        () => { S[id] = +$(id).value; save(); refreshLabels(); });
-    }
-    for (const id of ["invDrive", "invSteer", "invExtra"]) {
-      $(id).checked = S[id];
-      $(id).addEventListener("change", () => { S[id] = $(id).checked; save(); });
-    }
+    $("maxSpeed").value = S.maxSpeed;
+    $("maxSpeed").addEventListener("input", () => { S.maxSpeed = +$("maxSpeed").value; save(); refreshLabels(); });
+    for (const id of ["steerServo", "armA", "armB"]) $(id).addEventListener("change", () => { C()[id] = +$(id).value; save(); renderOuts(); });
+    for (const id of ["steerCenter", "steerRange", "turnMix"]) $(id).addEventListener("input", () => { C()[id] = +$(id).value; save(); refreshLabels(); });
+    $("invSteer").addEventListener("change", () => { C().invSteer = $("invSteer").checked; save(); });
+    [["p1a", "pose1", 0], ["p1b", "pose1", 1], ["p2a", "pose2", 0], ["p2b", "pose2", 1]].forEach(([id, k, j]) =>
+      $(id).addEventListener("change", () => {
+        const v = Math.max(0, Math.min(B().maxDeg, Math.round(+$(id).value || 0)));
+        $(id).value = v; C()[k][j] = v; save();
+      }));
     for (const [k] of MAPPABLE) {
-      const el = $("map" + k); el.value = S.btn[k] || "none";
-      el.addEventListener("change", () => { S.btn[k] = el.value; save(); });
+      const el = $("map" + k);
+      el.addEventListener("change", () => { C().btn[k] = el.value; save(); });
     }
     $("touchMode").checked = S.touch;
     $("touchMode").addEventListener("change", () => { S.touch = $("touchMode").checked; save(); setupTouch(); });
+    $("kbdMode").checked = S.kbd;
+    $("kbdMode").addEventListener("change", () => { S.kbd = $("kbdMode").checked; save(); $("kbdBox").hidden = !S.kbd; keys.clear(); });
+    $("kbdBox").hidden = !S.kbd;
   }
 
   const logEl = $("log");
@@ -462,7 +632,7 @@ basic.forever(function () {
       msgs.push("<b>Auf claude.ai ist Bluetooth für diese Seite gesperrt.</b> Hier kannst du alles ansehen und einstellen, aber nicht verbinden. Zum Fahren muss dieselbe Seite auf einer eigenen Webadresse liegen, zum Beispiel GitHub Pages.");
     }
     if (!navigator.getGamepads) {
-      msgs.push("Dieser Browser gibt keinen Controller an Webseiten weiter. Setze bei „Controller“ den Haken für die Finger-Steuerung.");
+      msgs.push("Dieser Browser gibt keinen Controller an Webseiten weiter. Nimm die Tastatur (WASD) oder setze bei „Controller“ den Haken für die Finger-Steuerung.");
       if (!S.touch) { S.touch = true; $("touchMode").checked = true; }
     }
     $("envBox").hidden = msgs.length === 0;
@@ -533,7 +703,7 @@ basic.forever(function () {
   async function connect(showAll) {
     if (!navigator.bluetooth) { checkEnv(); log("Kein Bluetooth in diesem Browser."); return; }
     $("btnConnect").disabled = true; $("chipBit").className = "chip wait"; $("chipBitTxt").textContent = "micro:bit: verbinde …";
-    try { await Bit.connect(showAll); }
+    try { await Bit.connect(showAll); lastD = ""; lastV = ""; }
     catch (e) {
       if (e && e.name === "NotFoundError") log("Kein micro:bit gewählt.");
       else if (e && e.name === "SecurityError") log("Bluetooth ist hier gesperrt. Seite in eigenem Tab öffnen.");
@@ -549,7 +719,7 @@ basic.forever(function () {
 
   // ---------- Not-Stopp ----------
   let locked = false;
-  let out = { drive: 0, angle: S.steerCenter, extra: 0 };
+  let out = { m: [0, 0, 0, 0], angle: 90 };
   async function emergency() {
     locked = true;
     $("btnStop").classList.add("locked"); $("stopTxt").textContent = "WEITER";
@@ -569,14 +739,39 @@ basic.forever(function () {
     if (a === "honk") { await Bit.line("T,440,150", true); setTimeout(() => Bit.line("T,440,150", true), 250); }
     else if (a === "hi") await Bit.line("T,880,150", true);
     else if (a === "lo") await Bit.line("T,262,200", true);
+    else if (a === "p1" || a === "p2") {
+      if (locked) return;
+      const c = C(), pose = a === "p1" ? c.pose1 : c.pose2;
+      if (c.armA) await Bit.line(`V,${c.armA},${pose[0]}`, true);
+      if (c.armB) await Bit.line(`V,${c.armB},${pose[1]}`, true);
+      if (!c.armA && !c.armB) log("Kein Arm-Servo eingestellt (Belegung → Arm oder Greifer).");
+    }
     else await Bit.line("I," + a, true);
   }
+
+  // ---------- Tastatur (WASD) ----------
+  const keys = new Set();
+  const KEYMAP = { KeyW: "w", ArrowUp: "w", KeyS: "s", ArrowDown: "s", KeyA: "a", ArrowLeft: "a", KeyD: "d", ArrowRight: "d", KeyR: "r", KeyF: "f" };
+  const typing = (e) => { const t = e.target; return t && (t.tagName === "INPUT" && t.type !== "checkbox" && t.type !== "range" || t.tagName === "SELECT" || t.tagName === "TEXTAREA"); };
+  window.addEventListener("keydown", (e) => {
+    if (!S.kbd || typing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (KEYMAP[e.code]) { keys.add(KEYMAP[e.code]); e.preventDefault(); return; }
+    if (e.repeat) return;
+    if (e.code === "Space") { e.preventDefault(); locked ? release() : emergency(); return; }
+    const n = /^(Digit|Numpad)([1-6])$/.exec(e.code);
+    if (n) { e.preventDefault(); action(C().btn[MAPPABLE[+n[2] - 1][0]]); }
+  });
+  window.addEventListener("keyup", (e) => { if (KEYMAP[e.code]) keys.delete(KEYMAP[e.code]); });
+  window.addEventListener("blur", () => keys.clear());
+  // Tasten weich anfahren: in etwa 0,25 s von 0 auf voll
+  const kb = { gas: 0, steer: 0, extra: 0 };
+  const toward = (v, t, step) => (Math.abs(t - v) <= step ? t : v + Math.sign(t - v) * step);
 
   // ---------- Controller ----------
   const DEAD = 0.12;
   const dz = (v) => (Math.abs(v) < DEAD ? 0 : (v - Math.sign(v) * DEAD) / (1 - DEAD));
   const touch = { lx: 0, ly: 0, rx: 0, ry: 0 };
-  let had = false, prev = [];
+  let had = false, prev = [], lastFrame = performance.now();
   function readPad() {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     for (const p of pads) if (p && p.connected) return p;
@@ -587,8 +782,10 @@ basic.forever(function () {
     const b = $(id); const w = Math.min(50, Math.abs(frac) * 50);
     b.style.width = w + "%"; b.style.left = frac >= 0 ? "50%" : (50 - w) + "%"; b.style.background = color;
   }
+  const clamp = (v) => Math.max(-1, Math.min(1, v));
 
-  function frame() {
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - lastFrame) / 1000)); lastFrame = now;
     const p = readPad();
     if (!!p !== had) {
       had = !!p;
@@ -611,34 +808,60 @@ basic.forever(function () {
     $("tL").style.width = lt * 100 + "%"; $("tR").style.width = rt * 100 + "%";
     $("tLv").textContent = Math.round(lt * 100); $("tRv").textContent = Math.round(rt * 100);
     for (const k of document.querySelectorAll("#keys .key")) k.classList.toggle("on", !!btn[+k.dataset.k]);
-    for (const [k] of MAPPABLE) if (btn[k] && !prev[k]) action(S.btn[k]);
+    const c = C();
+    for (const [k] of MAPPABLE) if (btn[k] && !prev[k]) action(c.btn[k]);
     prev = btn;
 
     const axis = { ly: -ly, ry: -ry, trig: rt - lt, lx, rx };
     let gas = axis[S.gasSrc];
     let steer = axis[S.steerSrc];
-    let extra = S.extraMotor && !(S.extraSrc === "trig" && S.gasSrc === "trig") && !(S.extraSrc === "ry" && (S.gasSrc === "ry" || S.steerSrc === "rx")) ? axis[S.extraSrc] : 0;
-    const clamp = (v) => Math.max(-1, Math.min(1, v));
-    const drive = Math.round(clamp(gas) * S.maxSpeed * (S.invDrive ? -1 : 1));
-    const angle = Math.round(S.steerCenter + clamp(steer) * S.steerRange * (S.invSteer ? -1 : 1));
-    const ex = Math.round(clamp(extra) * S.maxSpeed * (S.invExtra ? -1 : 1));
-    out = locked ? { drive: 0, angle: S.steerCenter, extra: 0 } : { drive, angle: Math.max(0, Math.min(270, angle)), extra: ex };
-    bar("bDrive", out.drive / 100, out.drive >= 0 ? "var(--accent)" : "var(--red)");
-    bar("bSteer", (out.angle - S.steerCenter) / 90, "var(--blue)");
-    bar("bExtra", out.extra / 100, out.extra >= 0 ? "var(--accent)" : "var(--red)");
-    $("vDrive").textContent = out.drive; $("vSteer").textContent = out.angle + "°"; $("vExtra").textContent = out.extra;
+    let extra = !(S.extraSrc === "trig" && S.gasSrc === "trig") && !(S.extraSrc === "ry" && (S.gasSrc === "ry" || S.steerSrc === "rx")) ? axis[S.extraSrc] : 0;
+
+    // Tastatur kommt dazu, wenn eine Taste gedrückt ist
+    const kd = (a, b) => (keys.has(a) ? 1 : 0) - (keys.has(b) ? 1 : 0);
+    const step = dt * 4;
+    kb.gas = toward(kb.gas, S.kbd ? kd("w", "s") : 0, step);
+    kb.steer = toward(kb.steer, S.kbd ? kd("d", "a") : 0, step * 1.5);
+    kb.extra = toward(kb.extra, S.kbd ? kd("r", "f") : 0, step);
+    if (kb.gas) gas = kb.gas;
+    if (kb.steer) steer = kb.steer;
+    if (kb.extra) extra = kb.extra;
+    for (const k of "wasd") $("k" + k.toUpperCase()).classList.toggle("on", keys.has(k));
+
+    // Mischen: Fahren, links, rechts, extra
+    gas = clamp(gas); steer = clamp(steer); extra = clamp(extra);
+    const mix = c.turnMix / 100;
+    let l = gas, r = gas;
+    if (c.steerServo) {
+      if (steer > 0) r = gas * (1 - mix * steer); else l = gas * (1 + mix * steer);
+    } else {
+      l = gas + mix * steer; r = gas - mix * steer;
+      const m = Math.max(1, Math.abs(l), Math.abs(r)); l /= m; r /= m;
+    }
+    const val = { off: 0, drive: gas, left: l, right: r, extra };
+    const m = c.motors.map((mo) => Math.round(clamp(val[mo.role]) * S.maxSpeed * (mo.inv ? -1 : 1)));
+    const angle = Math.max(0, Math.min(B().maxDeg, Math.round(c.steerCenter + steer * c.steerRange * (c.invSteer ? -1 : 1))));
+    out = locked ? { m: [0, 0, 0, 0], angle: c.steerCenter } : { m, angle };
+    out.m.forEach((v, i) => { bar("ob" + i, v / 100, v >= 0 ? "var(--accent)" : "var(--red)"); $("ov" + i).textContent = v; });
+    bar("obS", (out.angle - c.steerCenter) / 90, "var(--blue)");
+    $("ovS").textContent = out.angle + "°";
     requestAnimationFrame(frame);
   }
 
-  // Senden: bei Änderung alle 100 ms, sonst alle 300 ms als Lebenszeichen
-  let lastSent = "", lastTime = 0;
-  setInterval(() => {
-    if (!Bit.connected || locked) return;
-    const msg = `C,${S.driveMotor},${out.drive},${S.steerServo},${out.angle},${S.extraMotor},${out.extra}`;
-    const now = performance.now();
-    if (msg !== lastSent || now - lastTime > 300) {
-      Bit.line(msg).then((ok) => { if (ok) { lastSent = msg; lastTime = now; } });
-    }
+  // Senden: bei Änderung alle 100 ms, sonst alle 300 ms als Lebenszeichen.
+  // Lenkservo nur, wenn sich der Winkel ändert.
+  let lastD = "", lastDTime = 0, lastV = "", sending = false;
+  setInterval(async () => {
+    if (!Bit.connected || locked || sending) return;
+    sending = true;
+    try {
+      const now = performance.now();
+      const d = "D," + out.m.join(",");
+      if (d !== lastD || now - lastDTime > 300) { if (await Bit.line(d)) { lastD = d; lastDTime = now; } }
+      const sv = C().steerServo;
+      const v = sv ? `V,${sv},${out.angle}` : "";
+      if (v && v !== lastV) { if (await Bit.line(v)) lastV = v; }
+    } finally { sending = false; }
   }, 100);
 
   function setupTouch() {
@@ -672,12 +895,13 @@ basic.forever(function () {
       const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
       $("copyMsg").textContent = "Text ist markiert. Jetzt kopieren.";
     };
-    try { navigator.clipboard.writeText(PROGRAM).then(() => { $("copyMsg").textContent = "Kopiert."; }, fallback); } catch (e) { fallback(); }
+    try { navigator.clipboard.writeText(programFor(B())).then(() => { $("copyMsg").textContent = "Kopiert."; }, fallback); } catch (e) { fallback(); }
   });
 
   document.addEventListener("visibilitychange", () => { if (document.hidden && Bit.connected && !locked) emergency(); });
 
-  bindSettings(); refreshLabels(); checkEnv(); setupTouch(); updateChip();
+  bindSettings(); renderBoard(); checkEnv(); setupTouch(); updateChip();
+  window.__mbState = () => ({ out, board: S.board, keys: [...keys] });
   log("Seite geladen.");
   requestAnimationFrame(frame);
 })();

@@ -6,8 +6,8 @@
 <title>Robo-Fernsteuerung</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <style>
-:root { --bg: #f4f5f1; --plate: #ffffff; --ink: #1c2420; --muted: #5b655f; --line: #dde2dc; --green: #00a05a; --yellow: #ffcd03; color-scheme: light; }
-@media (prefers-color-scheme: dark) { :root { --bg: #12171a; --plate: #1b2226; --ink: #ecf0ee; --muted: #a2aea8; --line: #2c363b; color-scheme: dark; } }
+:root { --bg: #f4f5f1; --plate: #ffffff; --ink: #1c2420; --muted: #5b655f; --line: #dde2dc; --green: #00a05a; --blue: #2a63c9; --yellow: #ffcd03; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #12171a; --plate: #1b2226; --ink: #ecf0ee; --muted: #a2aea8; --line: #2c363b; --blue: #74a3f0; color-scheme: dark; } }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 "Atkinson Hyperlegible", system-ui, sans-serif;
   padding: 32px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px)); }
 main { max-width: 640px; margin: 0 auto; display: grid; gap: 16px; }
@@ -21,8 +21,9 @@ a.card b { font: 600 1.35rem "Fredoka", system-ui, sans-serif; }
 <body>
 <main>
   <h1>Robo-Fernsteuerung</h1>
-  <p>Mit dem Xbox-Controller fahren. Auf dem iPad in der App Bluefy öffnen.</p>
-  <a class="card" href="microbit.html" style="--c: var(--green)"><b>micro:bit-Auto</b><span>micro:bit mit SG-EMIB-01A-Platine</span></a>
+  <p>Mit dem Xbox-Controller oder der Tastatur (WASD) fahren. Auf dem iPad in der App Bluefy öffnen, am Computer in Chrome oder Edge.</p>
+  <a class="card" href="microbit.html#sg" style="--c: var(--green)"><b>micro:bit mit SG-EMIB-01A</b><span>Auto mit einem Fahrmotor und Lenkservo</span></a>
+  <a class="card" href="microbit.html#omni" style="--c: var(--blue)"><b>micro:bit mit Omni:bit</b><span>6-Räder-Auto mit vier Motoren, Lenkservo und Greifer</span></a>
   <a class="card" href="lego.html" style="--c: var(--yellow)"><b>LEGO SPIKE Prime</b><span>LEGO-Hub (Fahren nur mit Pybricks)</span></a>
 </main>
 </body>
