@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>micro:bit Fernsteuerung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: Platine – oben Status und Not-Stopp, darunter zwei Spalten (micro:bit & Ausgänge | Controller), dann Belegung, Programm, Anleitung. */
+:root {
+  --bg: #f1f5f2;
+  --plate: #ffffff;
+  --ink: #18241d;
+  --muted: #56645b;
+  --line: #d9e2db;
+  --accent: #00a05a;
+  --accent-ink: #ffffff;
+  --accent-soft: #dff3e8;
+  --blue: #2a63c9;
+  --blue-soft: #e4ecfa;
+  --red: #d42b2b;
+  --red-ink: #ffffff;
+  --warn: #e6a700;
+  --warn-soft: #fff4cf;
+  --trace: rgba(0, 120, 70, .06);
+  --code-bg: #eaf0ec;
+  --font-display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111814; --plate: #19221c; --ink: #e9f1ec; --muted: #9db0a4; --line: #2a372f;
+    --accent: #2fc77e; --accent-ink: #062414; --accent-soft: #163626; --blue: #74a3f0; --blue-soft: #1a2840;
+    --red: #ec4a4a; --red-ink: #ffffff; --warn: #f2c230; --warn-soft: #362d10;
+    --trace: rgba(80, 220, 150, .05); --code-bg: #141c17; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111814; --plate: #19221c; --ink: #e9f1ec; --muted: #9db0a4; --line: #2a372f;
+  --accent: #2fc77e; --accent-ink: #062414; --accent-soft: #163626; --blue: #74a3f0; --blue-soft: #1a2840;
+  --red: #ec4a4a; --red-ink: #ffffff; --warn: #f2c230; --warn-soft: #362d10;
+  --trace: rgba(80, 220, 150, .05); --code-bg: #141c17; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  background-image: linear-gradient(var(--trace) 2px, transparent 2px), linear-gradient(90deg, var(--trace) 2px, transparent 2px);
+  background-size: 32px 32px;
+  color: var(--ink);
+  font: 17px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; text-wrap: balance; line-height: 1.15; }
+h1 { font-size: 2rem; } h2 { font-size: 1.35rem; } h3 { font-size: 1.05rem; }
+p { margin: 0; }
+.muted { color: var(--muted); } .small { font-size: .88rem; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
+.brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+.mb { width: 48px; height: 40px; border-radius: 8px; background: var(--ink); display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 7px 9px; flex: none; }
+.mb i { background: var(--red); border-radius: 1px; opacity: .25; }
+.mb i.on { opacity: 1; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--plate); border: 2px solid var(--line); font-weight: 700; font-size: .92rem; }
+.dot { width: 11px; height: 11px; border-radius: 50%; background: var(--muted); flex: none; }
+.chip.ok { border-color: var(--accent); background: var(--accent-soft); } .chip.ok .dot { background: var(--accent); }
+.chip.wait .dot { background: var(--warn); }
+
+button, select, input { font: inherit; color: inherit; }
+.btn { appearance: none; border: 0; border-radius: 14px; padding: 12px 20px; font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; cursor: pointer; background: var(--accent); color: var(--accent-ink); box-shadow: 0 4px 0 rgba(0,0,0,.25); touch-action: manipulation; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.25); }
+.btn.ghost { background: var(--plate); color: var(--ink); border: 2px solid var(--line); box-shadow: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn:focus-visible, select:focus-visible, input:focus-visible, .stop:focus-visible, summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+.stop { appearance: none; border: 0; cursor: pointer; background: var(--red); color: var(--red-ink); font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; letter-spacing: .04em; padding: 14px 26px; border-radius: 18px; box-shadow: 0 5px 0 rgba(0,0,0,.3); display: inline-flex; align-items: center; gap: 12px; touch-action: manipulation; }
+.stop:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.3); }
+.stop .oct { width: 26px; height: 26px; background: var(--red-ink); clip-path: polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%); }
+.stop.locked { outline: 4px solid var(--warn); }
+
+.plate { background: var(--plate); border: 2px solid var(--line); border-radius: 20px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 820px) { .cols { grid-template-columns: 1fr; } }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.notice { border-radius: 14px; padding: 12px 14px; background: var(--warn-soft); border: 2px solid var(--warn); display: grid; gap: 6px; }
+.notice a { color: var(--blue); font-weight: 700; }
+
+.pad { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.stick { display: grid; justify-items: center; gap: 6px; }
+.ring { width: min(150px, 38vw); aspect-ratio: 1; max-width: 100%; border-radius: 50%; background: var(--bg); border: 3px solid var(--line); position: relative; touch-action: none; }
+.ring::before, .ring::after { content: ""; position: absolute; background: var(--line); }
+.ring::before { left: 50%; top: 10%; bottom: 10%; width: 2px; transform: translateX(-1px); }
+.ring::after { top: 50%; left: 10%; right: 10%; height: 2px; transform: translateY(-1px); }
+.knob { position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; border-radius: 50%; background: var(--accent); transform: translate(-50%, -50%); z-index: 1; box-shadow: 0 3px 0 rgba(0,0,0,.25); }
+.ring.touch { border-style: dashed; border-color: var(--accent); }
+.trig { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+.bar { height: 14px; border-radius: 7px; background: var(--bg); border: 2px solid var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--warn); }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.key { min-width: 46px; padding: 6px 10px; text-align: center; border-radius: 10px; border: 2px solid var(--line); font-weight: 700; font-family: var(--font-display); background: var(--bg); }
+.key.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.outs { display: grid; gap: 10px; }
+.mrow { display: grid; grid-template-columns: 8.5rem 1fr 3.6rem; gap: 10px; align-items: center; }
+.mbar { height: 22px; border-radius: 11px; background: var(--bg); border: 2px solid var(--line); position: relative; overflow: hidden; }
+.mbar::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--line); }
+.mbar > i { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; background: var(--accent); }
+.mval { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+.tag { display: inline-grid; place-items: center; min-width: 2.6rem; height: 1.7rem; padding: 0 6px; border-radius: 7px; background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: .8rem; font-weight: 600; margin-right: 6px; }
+
+.grid-set { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
+label.f, div.f { display: grid; gap: 4px; font-weight: 700; font-size: .95rem; }
+select { border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--bg); min-width: 0; width: 100%; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.check { display: flex; align-items: center; gap: 8px; font-weight: 400; }
+.check input { width: 22px; height: 22px; accent-color: var(--accent); }
+
+pre { margin: 0; background: var(--code-bg); border-radius: 12px; padding: 12px 14px; overflow-x: auto; font: 13px/1.5 var(--font-mono); max-height: 380px; }
+.log { background: var(--code-bg); border-radius: 12px; padding: 10px 12px; font: 12.5px/1.45 var(--font-mono); height: 110px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+details { border-top: 2px solid var(--line); padding-top: 10px; }
+summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
+ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-width: 70ch; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mb" aria-hidden="true" id="mbLogo"></div>
+      <div>
+        <h1>micro:bit Fernsteuerung</h1>
+        <p class="muted small">micro:bit · SG-EMIB-01A · Xbox-Controller · iPad</p>
+      </div>
+    </div>
+    <div class="chips" aria-live="polite">
+      <span class="chip" id="chipPad"><span class="dot"></span><span id="chipPadTxt">Controller: nicht da</span></span>
+      <span class="chip" id="chipBit"><span class="dot"></span><span id="chipBitTxt">micro:bit: nicht verbunden</span></span>
+    </div>
+    <button class="stop" id="btnStop" type="button"><span class="oct" aria-hidden="true"></span><span id="stopTxt">NOT-STOPP</span></button>
+  </header>
+
+  <div id="envBox" class="notice" hidden></div>
+
+  <div class="cols">
+    <section class="plate" aria-labelledby="hBit">
+      <h2 id="hBit">micro:bit</h2>
+      <div class="row">
+        <button class="btn" id="btnConnect" type="button">micro:bit verbinden</button>
+        <button class="btn ghost" id="btnDisconnect" type="button" disabled>Trennen</button>
+      </div>
+      <p class="small muted">micro:bit nicht in der Liste? <button class="btn ghost" id="btnShowAll" type="button" style="padding:6px 12px;font-size:.95rem">Alle Bluetooth-Geräte zeigen</button></p>
+      <div class="outs">
+        <div class="mrow"><span><span class="tag" id="tgDrive">M2_A</span>Fahren</span><div class="mbar"><i id="bDrive"></i></div><span class="mval" id="vDrive">0</span></div>
+        <div class="mrow"><span><span class="tag" id="tgSteer">S1</span>Lenken</span><div class="mbar"><i id="bSteer"></i></div><span class="mval" id="vSteer">90°</span></div>
+        <div class="mrow"><span><span class="tag" id="tgExtra">aus</span>Extra</span><div class="mbar"><i id="bExtra"></i></div><span class="mval" id="vExtra">0</span></div>
+      </div>
+      <div class="log" id="log" aria-label="Meldungen"></div>
+    </section>
+
+    <section class="plate" aria-labelledby="hPad">
+      <h2 id="hPad">Controller</h2>
+      <p class="small muted" id="padHint">Controller mit dem iPad koppeln und dann eine Taste drücken, damit der Browser ihn sieht.</p>
+      <div class="pad">
+        <div class="stick"><div class="ring" id="ringL"><div class="knob" id="knobL"></div></div><span class="small muted">Linker Stick</span></div>
+        <div class="stick"><div class="ring" id="ringR"><div class="knob" id="knobR"></div></div><span class="small muted">Rechter Stick</span></div>
+      </div>
+      <div class="trig"><span class="key">LT</span><div class="bar"><i id="tL"></i></div><span class="mono small" id="tLv">0</span></div>
+      <div class="trig"><span class="key">RT</span><div class="bar"><i id="tR"></i></div><span class="mono small" id="tRv">0</span></div>
+      <div class="btns" id="keys">
+        <span class="key" data-k="0">A</span><span class="key" data-k="1">B</span><span class="key" data-k="2">X</span><span class="key" data-k="3">Y</span>
+        <span class="key" data-k="4">LB</span><span class="key" data-k="5">RB</span><span class="key" data-k="12">▲</span><span class="key" data-k="13">▼</span><span class="key" data-k="14">◀</span><span class="key" data-k="15">▶</span>
+      </div>
+      <label class="check small"><input type="checkbox" id="touchMode"> Ohne Controller: Sticks mit dem Finger bedienen</label>
+    </section>
+  </div>
+
+  <section class="plate" aria-labelledby="hMap">
+    <h2 id="hMap">Belegung</h2>
+    <div class="grid-set">
+      <label class="f">Gas geben mit
+        <select id="gasSrc">
+          <option value="ly">Linker Stick hoch/runter</option>
+          <option value="trig">Trigger: RT vor, LT zurück</option>
+          <option value="ry">Rechter Stick hoch/runter</option>
+        </select></label>
+      <label class="f">Lenken mit
+        <select id="steerSrc">
+          <option value="lx">Linker Stick links/rechts</option>
+          <option value="rx">Rechter Stick links/rechts</option>
+        </select></label>
+      <label class="f">Fahrmotor an
+        <select id="driveMotor"></select></label>
+      <label class="f">Lenkservo an
+        <select id="steerServo"></select></label>
+      <label class="f">Extra-Motor an
+        <select id="extraMotor"></select></label>
+      <label class="f">Extra-Motor steuern mit
+        <select id="extraSrc">
+          <option value="trig">Trigger: RT vor, LT zurück</option>
+          <option value="ry">Rechter Stick hoch/runter</option>
+        </select></label>
+      <label class="f">Höchstes Tempo: <span id="maxV" class="mono"></span>
+        <input type="range" id="maxSpeed" min="20" max="100" step="5"></label>
+      <label class="f">Lenkung Mitte: <span id="centerV" class="mono"></span>
+        <input type="range" id="steerCenter" min="45" max="135" step="1"></label>
+      <label class="f">Lenkung Ausschlag: <span id="rangeV" class="mono"></span>
+        <input type="range" id="steerRange" min="15" max="90" step="5"></label>
+      <div class="f">Richtung umdrehen
+        <label class="check"><input type="checkbox" id="invDrive"> Fahrmotor</label>
+        <label class="check"><input type="checkbox" id="invSteer"> Lenkung</label>
+        <label class="check"><input type="checkbox" id="invExtra"> Extra-Motor</label>
+      </div>
+    </div>
+    <h3>Tasten</h3>
+    <div class="grid-set" id="btnMap"></div>
+    <p class="small muted">Wenn Gas und Extra-Motor beide auf den Triggern liegen, gewinnt das Gas.</p>
+  </section>
+
+  <section class="plate" aria-labelledby="hProg">
+    <h2 id="hProg">Programm für den micro:bit</h2>
+    <p class="small" style="max-width:70ch">Dein jetziges Projekt „Lijo Motortreiber“ hört auf <b>Funk</b> (Gruppe 33). Eine Webseite kann aber nur über <b>Bluetooth</b> mit dem micro:bit reden, und MakeCode erlaubt Funk und Bluetooth nicht gleichzeitig. Die SG-EMIB-01A-Erweiterung bringt den Funk selbst mit. Deshalb steuert dieses Programm die Platine direkt an und braucht nur die Bluetooth-Erweiterung. Am besten als <b>neues Projekt</b> anlegen, dann bleibt das alte für die Funk-Fernbedienung erhalten.</p>
+    <div class="row"><button class="btn ghost" id="btnCopy" type="button">Programm kopieren</button><span class="small muted" id="copyMsg" aria-live="polite"></span></div>
+    <pre id="progCode"></pre>
+  </section>
+
+  <section class="plate" aria-labelledby="hHelp">
+    <h2 id="hHelp">So geht's</h2>
+    <details open>
+      <summary>1. Programm auf den micro:bit laden (einmal)</summary>
+      <ol class="steps">
+        <li><a href="https://makecode.microbit.org" target="_blank" rel="noopener">makecode.microbit.org</a> öffnen und <b>Neues Projekt</b> anlegen, Name zum Beispiel „Lijo Bluetooth“.</li>
+        <li>Unten bei den Blöcken auf <b>Erweiterungen</b> tippen, <b>bluetooth</b> suchen und hinzufügen. Fragt MakeCode, ob „radio“ entfernt werden soll: Ja.</li>
+        <li>Oben von <b>Blöcke</b> auf <b>JavaScript</b> umschalten, alles löschen und das Programm von oben einfügen.</li>
+        <li>Zahnrad oben rechts → <b>Projekteinstellungen</b> → <b>„Keine Kopplung erforderlich“</b> (No Pairing Required) einschalten und speichern. Ohne das klappt die Verbindung mit dem iPad meistens nicht.</li>
+        <li><b>Herunterladen</b> und auf den micro:bit ziehen, wie bei deinem alten Programm. Danach zeigt er ein kleines Quadrat.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>2. Controller mit dem iPad koppeln</summary>
+      <ol class="steps">
+        <li>Am iPad: <b>Einstellungen → Bluetooth</b>.</li>
+        <li>Xbox-Taste drücken, dann die kleine <b>Pairing-Taste</b> oben am Controller 3 Sekunden halten, bis die Xbox-Taste schnell blinkt.</li>
+        <li>„Xbox Wireless Controller“ antippen.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>3. Browser und Verbinden</summary>
+      <ol class="steps">
+        <li>Safari kann kein Bluetooth für Webseiten. Diese Seite in der App <b>Bluefy – Web BLE Browser</b> öffnen.</li>
+        <li>Platine einschalten, „micro:bit verbinden“ tippen und „BBC micro:bit […]“ wählen. Der micro:bit zeigt dann einen Haken.</li>
+        <li>Zeigt der Controller-Punkt oben grau, obwohl er gekoppelt ist: Haken bei „Sticks mit dem Finger bedienen“ setzen.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>4. Wo hängt was an der Platine?</summary>
+      <ol class="steps">
+        <li>Wie in deinem Projekt: Fahrmotor an <b>M2_A</b>, Lenkservo an <b>S1</b>. Ein dritter Motor kann an M1_A, M1_B oder M2_B.</li>
+        <li>Fährt das Auto bei „Stick hoch“ rückwärts, bei „Richtung umdrehen“ den Haken beim Fahrmotor ändern. Steht die Lenkung nicht gerade, „Lenkung Mitte“ verschieben.</li>
+        <li>Not-Stopp: roter Knopf, Taste B oder die Verbindung trennen. Kommt fast eine Sekunde nichts an, hält der Motor von selbst an.</li>
+      </ol>
+    </details>
+  </section>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const PROGRAM = `// micro:bit Fernsteuerung – Empfänger über Bluetooth für SG-EMIB-01A
+// Steuert den PCA9685 auf der Platine direkt (I2C 0x40), ohne Funk.
+const PCA = 0x40
+let ready = false
+let lastCmd = 0
+let moving = false
+let toneOff = 0
+
+function reg(r: number, v: number) {
+    const b = pins.createBuffer(2)
+    b[0] = r
+    b[1] = v
+    pins.i2cWriteBuffer(PCA, b)
+}
+function pwm(ch: number, off: number) {
+    const b = pins.createBuffer(5)
+    b[0] = 0x06 + 4 * ch
+    b[1] = 0
+    b[2] = 0
+    b[3] = off & 0xff
+    b[4] = (off >> 8) & 0xff
+    pins.i2cWriteBuffer(PCA, b)
+}
+function init() {
+    reg(0x00, 0x00)
+    pins.i2cWriteNumber(PCA, 0x00, NumberFormat.UInt8BE)
+    const old = pins.i2cReadNumber(PCA, NumberFormat.UInt8BE)
+    reg(0x00, (old & 0x7f) | 0x10)   // schlafen
+    reg(0xfe, 121)                     // 50 Hz
+    reg(0x00, old)
+    control.waitMicros(5000)
+    reg(0x00, old | 0xa1)
+    for (let i = 0; i < 16; i++) pwm(i, 0)
+    ready = true
+}
+// Motor 1=M1_A 2=M1_B 3=M2_A 4=M2_B, Tempo -100..100
+function motor(m: number, speed: number) {
+    if (m < 1 || m > 4) return
+    const v = Math.min(4095, Math.idiv(Math.abs(speed) * 4095, 100))
+    const a = (m - 1) * 2
+    if (speed >= 0) {
+        pwm(a, 0)
+        pwm(a + 1, v)
+    } else {
+        pwm(a, v)
+        pwm(a + 1, 0)
+    }
+}
+// Servo 1..8 = S1..S8, Winkel wie in der SG-EMIB-01A-Erweiterung
+function servo(s: number, deg: number) {
+    if (s < 1 || s > 8) return
+    const us = Math.idiv(deg * 1800, 270) + 600
+    pwm(s + 7, Math.idiv(us * 4096, 20000))
+}
+function stopAll() {
+    for (let m = 1; m <= 4; m++) motor(m, 0)
+    moving = false
+}
+
+// Sparsam: kein Warten im Empfang, keine Hintergrund-Aufgaben,
+// damit der Speicher (Fehler 020) reicht.
+bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () {
+    const p = bluetooth.uartReadUntil(serial.delimiters(Delimiters.NewLine)).split(",")
+    if (!ready) init()
+    lastCmd = control.millis()
+    const c = p[0]
+    if (c == "C" && p.length >= 7) {   // C,Motor,Tempo,Servo,Winkel,Motor2,Tempo2
+        motor(parseInt(p[1]), parseInt(p[2]))
+        servo(parseInt(p[3]), parseInt(p[4]))
+        motor(parseInt(p[5]), parseInt(p[6]))
+        moving = true
+    } else if (c == "S") {   // Not-Stopp
+        stopAll()
+        basic.showIcon(IconNames.No, 0)
+    } else if (c == "T" && p.length >= 3) {   // T,Frequenz,Dauer
+        music.ringTone(parseInt(p[1]))
+        toneOff = control.millis() + parseInt(p[2])
+    } else if (c == "I") {   // I,Bild
+        const n = parseInt(p[1])
+        if (n == 1) basic.showIcon(IconNames.Heart, 0)
+        else if (n == 2) basic.showIcon(IconNames.Happy, 0)
+        else if (n == 3) basic.showIcon(IconNames.Sad, 0)
+        else if (n == 4) basic.showIcon(IconNames.Yes, 0)
+        else basic.clearScreen()
+    }
+})
+bluetooth.onBluetoothConnected(function () {
+    basic.showIcon(IconNames.Yes, 0)
+})
+bluetooth.onBluetoothDisconnected(function () {
+    if (ready) stopAll()
+    basic.showIcon(IconNames.SmallSquare, 0)
+})
+bluetooth.startUartService()
+basic.showIcon(IconNames.SmallSquare, 0)
+
+// Sicherheit: kommt 800 ms nichts mehr, Motoren aus. Außerdem Ton beenden.
+basic.forever(function () {
+    const now = control.millis()
+    if (moving && now - lastCmd > 800) stopAll()
+    if (toneOff > 0 && now > toneOff) {
+        music.stopAllSounds()
+        toneOff = 0
+    }
+    basic.pause(50)
+})
+`;
+  const $ = (id) => document.getElementById(id);
+  $("progCode").textContent = PROGRAM;
+  $("mbLogo").innerHTML = Array.from({ length: 25 }, (_, i) => `<i class="${[6, 8, 15, 19, 21, 22, 23].includes(i) ? "on" : ""}"></i>`).join("");
+
+  // ---------- Einstellungen ----------
+  const MOTORS = [[1, "M1_A"], [2, "M1_B"], [3, "M2_A"], [4, "M2_B"]];
+  const SERVOS = Array.from({ length: 8 }, (_, i) => [i + 1, "S" + (i + 1)]);
+  const ACTIONS = [
+    ["none", "nichts"], ["stop", "Not-Stopp"], ["honk", "Hupe"], ["hi", "Ton hoch"], ["lo", "Ton tief"],
+    ["1", "Herz zeigen"], ["2", "Lachgesicht"], ["3", "Traurig"], ["4", "Haken"], ["0", "Anzeige aus"],
+  ];
+  const MAPPABLE = [[0, "A"], [1, "B"], [2, "X"], [3, "Y"], [4, "LB"], [5, "RB"]];
+  const DEFAULTS = {
+    gasSrc: "ly", steerSrc: "lx", driveMotor: 3, steerServo: 1, extraMotor: 0, extraSrc: "trig",
+    maxSpeed: 100, steerCenter: 90, steerRange: 90, invDrive: true, invSteer: false, invExtra: false, touch: false,
+    btn: { 0: "honk", 1: "stop", 2: "1", 3: "2", 4: "lo", 5: "hi" },
+  };
+  let S = JSON.parse(JSON.stringify(DEFAULTS));
+  try {
+    const saved = JSON.parse(localStorage.getItem("mb-settings") || "null");
+    if (saved) S = Object.assign(S, saved, { btn: Object.assign({}, DEFAULTS.btn, saved.btn || {}) });
+  } catch (e) {}
+  const save = () => { try { localStorage.setItem("mb-settings", JSON.stringify(S)); } catch (e) {} };
+
+  const opts = (list, withOff) => (withOff ? `<option value="0">aus</option>` : "") + list.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+  $("driveMotor").innerHTML = opts(MOTORS, false);
+  $("steerServo").innerHTML = opts(SERVOS, true);
+  $("extraMotor").innerHTML = opts(MOTORS, true);
+  $("btnMap").innerHTML = MAPPABLE.map(([k, n]) =>
+    `<label class="f">Taste ${n}<select id="map${k}">${ACTIONS.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select></label>`).join("");
+
+  const nameOf = (list, v) => (list.find(([x]) => x === v) || [0, "aus"])[1];
+  function refreshLabels() {
+    $("maxV").textContent = S.maxSpeed + " %";
+    $("centerV").textContent = S.steerCenter + "°";
+    $("rangeV").textContent = "± " + S.steerRange + "°";
+    $("tgDrive").textContent = nameOf(MOTORS, S.driveMotor);
+    $("tgSteer").textContent = nameOf(SERVOS, S.steerServo);
+    $("tgExtra").textContent = nameOf(MOTORS, S.extraMotor);
+  }
+  function bindSettings() {
+    for (const id of ["gasSrc", "steerSrc", "extraSrc"]) {
+      $(id).value = S[id];
+      $(id).addEventListener("change", () => { S[id] = $(id).value; save(); });
+    }
+    for (const id of ["driveMotor", "steerServo", "extraMotor", "maxSpeed", "steerCenter", "steerRange"]) {
+      $(id).value = S[id];
+      $(id).addEventListener(id.startsWith("max") || id.startsWith("steerC") || id.startsWith("steerR") ? "input" : "change",
+        () => { S[id] = +$(id).value; save(); refreshLabels(); });
+    }
+    for (const id of ["invDrive", "invSteer", "invExtra"]) {
+      $(id).checked = S[id];
+      $(id).addEventListener("change", () => { S[id] = $(id).checked; save(); });
+    }
+    for (const [k] of MAPPABLE) {
+      const el = $("map" + k); el.value = S.btn[k] || "none";
+      el.addEventListener("change", () => { S.btn[k] = el.value; save(); });
+    }
+    $("touchMode").checked = S.touch;
+    $("touchMode").addEventListener("change", () => { S.touch = $("touchMode").checked; save(); setupTouch(); });
+  }
+
+  const logEl = $("log");
+  function log(msg) {
+    logEl.textContent += `[${new Date().toLocaleTimeString("de-DE")}] ${msg}\n`;
+    if (logEl.textContent.length > 6000) logEl.textContent = logEl.textContent.slice(-4000);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function checkEnv() {
+    const msgs = [];
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    let policy = null;
+    try { const fp = document.permissionsPolicy || document.featurePolicy; if (fp) policy = fp.allowsFeature("bluetooth"); } catch (e) {}
+    if (!navigator.bluetooth) {
+      msgs.push(isIOS
+        ? "<b>Dieser Browser kann kein Bluetooth für Webseiten.</b> Safari auf dem iPad kann das leider nicht. Öffne diese Seite in der App <b>Bluefy – Web BLE Browser</b> (kostenlos im App Store)."
+        : "<b>Dieser Browser kann kein Bluetooth für Webseiten.</b> Auf dem iPad: Bluefy nehmen. Am Computer: Chrome oder Edge.");
+    }
+    if (/claudeusercontent\.com$/.test(location.hostname) || policy === false) {
+      msgs.push("<b>Auf claude.ai ist Bluetooth für diese Seite gesperrt.</b> Hier kannst du alles ansehen und einstellen, aber nicht verbinden. Zum Fahren muss dieselbe Seite auf einer eigenen Webadresse liegen, zum Beispiel GitHub Pages.");
+    }
+    if (!navigator.getGamepads) {
+      msgs.push("Dieser Browser gibt keinen Controller an Webseiten weiter. Setze bei „Controller“ den Haken für die Finger-Steuerung.");
+      if (!S.touch) { S.touch = true; $("touchMode").checked = true; }
+    }
+    $("envBox").hidden = msgs.length === 0;
+    $("envBox").innerHTML = msgs.map((m) => `<p>${m}</p>`).join("");
+  }
+
+  // ---------- micro:bit über Bluetooth-UART ----------
+  const UART = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+  const UART_A = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+  const UART_B = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const Bit = {
+    device: null, rx: null, busy: false,
+    get connected() { return !!(this.device && this.device.gatt.connected); },
+    async connect(showAll) {
+      this.device = await navigator.bluetooth.requestDevice(showAll
+        ? { acceptAllDevices: true, optionalServices: [UART] }
+        : { filters: [{ namePrefix: "BBC micro:bit" }, { services: [UART] }], optionalServices: [UART] });
+      this.device.addEventListener("gattserverdisconnected", onLost);
+      const server = await this.device.gatt.connect();
+      const svc = await server.getPrimaryService(UART);
+      // Beim micro:bit sind die beiden UART-Kanäle anders herum benannt als üblich,
+      // darum nach Eigenschaften aussuchen.
+      for (const uuid of [UART_A, UART_B]) {
+        const ch = await svc.getCharacteristic(uuid);
+        const pr = ch.properties;
+        if (pr.write || pr.writeWithoutResponse) this.rx = ch;
+        else if (pr.indicate || pr.notify) {
+          ch.addEventListener("characteristicvaluechanged", (ev) => {
+            const t = dec.decode(ev.target.value).trim(); if (t) log("micro:bit: " + t);
+          });
+          try { await ch.startNotifications(); } catch (e) {}
+        }
+      }
+      if (!this.rx) throw new Error("Kein Schreibkanal gefunden. Ist das Programm von dieser Seite auf dem micro:bit?");
+      log(`Verbunden mit „${this.device.name || "micro:bit"}“.`);
+    },
+    async line(text, force) {
+      if (!this.rx || (this.busy && !force)) return false;
+      while (this.busy) await new Promise((r) => setTimeout(r, 5));
+      this.busy = true;
+      try {
+        const bytes = enc.encode(text + "\n");
+        for (let i = 0; i < bytes.length; i += 20) {
+          const part = bytes.slice(i, i + 20);
+          if (this.rx.properties.write) await (this.rx.writeValueWithResponse ? this.rx.writeValueWithResponse(part) : this.rx.writeValue(part));
+          else await (this.rx.writeValueWithoutResponse ? this.rx.writeValueWithoutResponse(part) : this.rx.writeValue(part));
+        }
+        return true;
+      } catch (e) { log("Senden ging nicht: " + e.message); return false; }
+      finally { this.busy = false; }
+    },
+    async disconnect() {
+      try { if (this.rx) await this.line("S", true); } catch (e) {}
+      if (this.connected) this.device.gatt.disconnect();
+    },
+    reset() { this.device = null; this.rx = null; this.busy = false; },
+  };
+
+  function updateChip() {
+    const c = Bit.connected;
+    $("chipBit").className = "chip " + (c ? "ok" : "");
+    $("chipBitTxt").textContent = c ? "micro:bit: verbunden" : "micro:bit: nicht verbunden";
+    $("btnConnect").disabled = c; $("btnDisconnect").disabled = !c;
+  }
+  function onLost() { log("Verbindung zum micro:bit weg."); Bit.reset(); updateChip(); }
+
+  async function connect(showAll) {
+    if (!navigator.bluetooth) { checkEnv(); log("Kein Bluetooth in diesem Browser."); return; }
+    $("btnConnect").disabled = true; $("chipBit").className = "chip wait"; $("chipBitTxt").textContent = "micro:bit: verbinde …";
+    try { await Bit.connect(showAll); }
+    catch (e) {
+      if (e && e.name === "NotFoundError") log("Kein micro:bit gewählt.");
+      else if (e && e.name === "SecurityError") log("Bluetooth ist hier gesperrt. Seite in eigenem Tab öffnen.");
+      else log("Verbinden ging nicht: " + (e && e.message ? e.message : e));
+      try { await Bit.disconnect(); } catch (_) {}
+      Bit.reset();
+    }
+    updateChip();
+  }
+  $("btnConnect").addEventListener("click", () => connect(false));
+  $("btnShowAll").addEventListener("click", () => connect(true));
+  $("btnDisconnect").addEventListener("click", async () => { await Bit.disconnect(); Bit.reset(); updateChip(); log("Getrennt."); });
+
+  // ---------- Not-Stopp ----------
+  let locked = false;
+  let out = { drive: 0, angle: S.steerCenter, extra: 0 };
+  async function emergency() {
+    locked = true;
+    $("btnStop").classList.add("locked"); $("stopTxt").textContent = "WEITER";
+    log("NOT-STOPP!");
+    if (Bit.connected) await Bit.line("S", true);
+  }
+  function release() {
+    locked = false;
+    $("btnStop").classList.remove("locked"); $("stopTxt").textContent = "NOT-STOPP";
+    log("Freigegeben.");
+  }
+  $("btnStop").addEventListener("click", () => (locked ? release() : emergency()));
+
+  async function action(a) {
+    if (a === "stop") return locked ? release() : emergency();
+    if (!Bit.connected || a === "none") return;
+    if (a === "honk") { await Bit.line("T,440,150", true); setTimeout(() => Bit.line("T,440,150", true), 250); }
+    else if (a === "hi") await Bit.line("T,880,150", true);
+    else if (a === "lo") await Bit.line("T,262,200", true);
+    else await Bit.line("I," + a, true);
+  }
+
+  // ---------- Controller ----------
+  const DEAD = 0.12;
+  const dz = (v) => (Math.abs(v) < DEAD ? 0 : (v - Math.sign(v) * DEAD) / (1 - DEAD));
+  const touch = { lx: 0, ly: 0, rx: 0, ry: 0 };
+  let had = false, prev = [];
+  function readPad() {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const p of pads) if (p && p.connected) return p;
+    return null;
+  }
+  const knob = (el, x, y) => { el.style.transform = `translate(calc(-50% + ${x * 115}%), calc(-50% + ${y * 115}%))`; };
+  function bar(id, frac, color) {
+    const b = $(id); const w = Math.min(50, Math.abs(frac) * 50);
+    b.style.width = w + "%"; b.style.left = frac >= 0 ? "50%" : (50 - w) + "%"; b.style.background = color;
+  }
+
+  function frame() {
+    const p = readPad();
+    if (!!p !== had) {
+      had = !!p;
+      $("chipPad").className = "chip " + (p ? "ok" : "");
+      $("chipPadTxt").textContent = p ? "Controller: da" : "Controller: nicht da";
+      $("padHint").textContent = p ? `Erkannt: ${p.id.replace(/\(.*\)/, "").trim() || "Controller"}` : "Controller mit dem iPad koppeln und dann eine Taste drücken, damit der Browser ihn sieht.";
+      log(p ? "Controller erkannt." : "Controller weg.");
+    }
+    let lx = 0, ly = 0, rx = 0, ry = 0, lt = 0, rt = 0, btn = [];
+    if (p) {
+      lx = dz(p.axes[0] || 0); ly = dz(p.axes[1] || 0); rx = dz(p.axes[2] || 0); ry = dz(p.axes[3] || 0);
+      btn = p.buttons.map((b) => b.pressed);
+      lt = p.buttons[6] ? p.buttons[6].value : 0; rt = p.buttons[7] ? p.buttons[7].value : 0;
+    }
+    if (S.touch) {
+      if (touch.lx || touch.ly) { lx = touch.lx; ly = touch.ly; }
+      if (touch.rx || touch.ry) { rx = touch.rx; ry = touch.ry; }
+    }
+    knob($("knobL"), lx, ly); knob($("knobR"), rx, ry);
+    $("tL").style.width = lt * 100 + "%"; $("tR").style.width = rt * 100 + "%";
+    $("tLv").textContent = Math.round(lt * 100); $("tRv").textContent = Math.round(rt * 100);
+    for (const k of document.querySelectorAll("#keys .key")) k.classList.toggle("on", !!btn[+k.dataset.k]);
+    for (const [k] of MAPPABLE) if (btn[k] && !prev[k]) action(S.btn[k]);
+    prev = btn;
+
+    const axis = { ly: -ly, ry: -ry, trig: rt - lt, lx, rx };
+    let gas = axis[S.gasSrc];
+    let steer = axis[S.steerSrc];
+    let extra = S.extraMotor && !(S.extraSrc === "trig" && S.gasSrc === "trig") && !(S.extraSrc === "ry" && (S.gasSrc === "ry" || S.steerSrc === "rx")) ? axis[S.extraSrc] : 0;
+    const clamp = (v) => Math.max(-1, Math.min(1, v));
+    const drive = Math.round(clamp(gas) * S.maxSpeed * (S.invDrive ? -1 : 1));
+    const angle = Math.round(S.steerCenter + clamp(steer) * S.steerRange * (S.invSteer ? -1 : 1));
+    const ex = Math.round(clamp(extra) * S.maxSpeed * (S.invExtra ? -1 : 1));
+    out = locked ? { drive: 0, angle: S.steerCenter, extra: 0 } : { drive, angle: Math.max(0, Math.min(270, angle)), extra: ex };
+    bar("bDrive", out.drive / 100, out.drive >= 0 ? "var(--accent)" : "var(--red)");
+    bar("bSteer", (out.angle - S.steerCenter) / 90, "var(--blue)");
+    bar("bExtra", out.extra / 100, out.extra >= 0 ? "var(--accent)" : "var(--red)");
+    $("vDrive").textContent = out.drive; $("vSteer").textContent = out.angle + "°"; $("vExtra").textContent = out.extra;
+    requestAnimationFrame(frame);
+  }
+
+  // Senden: bei Änderung alle 100 ms, sonst alle 300 ms als Lebenszeichen
+  let lastSent = "", lastTime = 0;
+  setInterval(() => {
+    if (!Bit.connected || locked) return;
+    const msg = `C,${S.driveMotor},${out.drive},${S.steerServo},${out.angle},${S.extraMotor},${out.extra}`;
+    const now = performance.now();
+    if (msg !== lastSent || now - lastTime > 300) {
+      Bit.line(msg).then((ok) => { if (ok) { lastSent = msg; lastTime = now; } });
+    }
+  }, 100);
+
+  function setupTouch() {
+    for (const [id, kx, ky] of [["ringL", "lx", "ly"], ["ringR", "rx", "ry"]]) {
+      const ring = $(id);
+      ring.classList.toggle("touch", S.touch);
+      if (ring.dataset.bound) continue;
+      ring.dataset.bound = "1";
+      const move = (e) => {
+        const rc = ring.getBoundingClientRect();
+        let x = ((e.clientX - rc.left) / rc.width) * 2 - 1, y = ((e.clientY - rc.top) / rc.height) * 2 - 1;
+        const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
+        touch[kx] = Math.abs(x) < 0.08 ? 0 : x; touch[ky] = Math.abs(y) < 0.08 ? 0 : y;
+      };
+      let active = null;
+      ring.addEventListener("pointerdown", (e) => {
+        if (!S.touch) return;
+        active = e.pointerId;
+        try { ring.setPointerCapture(e.pointerId); } catch (_) {}
+        move(e);
+      });
+      ring.addEventListener("pointermove", (e) => { if (e.pointerId === active) move(e); });
+      const end = () => { active = null; touch[kx] = 0; touch[ky] = 0; };
+      ring.addEventListener("pointerup", end); ring.addEventListener("pointercancel", end);
+    }
+  }
+
+  $("btnCopy").addEventListener("click", () => {
+    const fallback = () => {
+      const r = document.createRange(); r.selectNodeContents($("progCode"));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      $("copyMsg").textContent = "Text ist markiert. Jetzt kopieren.";
+    };
+    try { navigator.clipboard.writeText(PROGRAM).then(() => { $("copyMsg").textContent = "Kopiert."; }, fallback); } catch (e) { fallback(); }
+  });
+
+  document.addEventListener("visibilitychange", () => { if (document.hidden && Bit.connected && !locked) emergency(); });
+
+  bindSettings(); refreshLabels(); checkEnv(); setupTouch(); updateChip();
+  log("Seite geladen.");
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
