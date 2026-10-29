@@ -129,8 +129,7 @@ button, select, input { font: inherit; color: inherit; }
 .grid-set { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
 label.f, div.f { display: grid; gap: 4px; font-weight: 700; font-size: .95rem; }
 select { border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--bg); min-width: 0; width: 100%; }
-input[type="number"] { border: 2px solid var(--line); border-radius: 10px; padding: 6px 8px; background: var(--bg); width: 5rem; }
-input[type="range"] { width: 100%; accent-color: var(--accent); }
+input[type="number"] { border: 2px solid var(--line); border-radius: 10px; padding: 6px 8px; background: var(--bg); width: 5rem; }input[type="range"] { width: 100%; accent-color: var(--accent); }
 .check { display: flex; align-items: center; gap: 8px; font-weight: 400; }
 .check input { width: 22px; height: 22px; accent-color: var(--accent); }
 .mtab { display: grid; gap: 8px; }
@@ -176,11 +175,23 @@ ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-wi
           <button type="button" id="boardOmni" aria-pressed="false">Omni:bit</button>
         </div>
       </div>
+      <div class="row" id="linkRow" hidden>
+        <span class="muted small">Verbindung:</span>
+        <div class="seg" role="group" aria-label="Verbindung">
+          <button type="button" id="linkBle" aria-pressed="true">Bluetooth (iPad)</button>
+          <button type="button" id="linkRadio" aria-pressed="false">Funk über USB (PC)</button>
+        </div>
+      </div>
+      <div class="f" id="groupRow" hidden>
+        <label for="radioGroup">Funkgruppe (0 bis 255)</label>
+        <div class="row"><input type="number" id="radioGroup" min="0" max="255" step="1">
+          <span class="small muted" style="flex:1 1 220px">Jedes Auto im Club braucht eine eigene Zahl. Auto und Sender müssen dieselbe haben.</span></div>
+      </div>
       <div class="row">
         <button class="btn" id="btnConnect" type="button">micro:bit verbinden</button>
         <button class="btn ghost" id="btnDisconnect" type="button" disabled>Trennen</button>
       </div>
-      <p class="small muted">micro:bit nicht in der Liste? <button class="btn ghost" id="btnShowAll" type="button" style="padding:6px 12px;font-size:.95rem">Alle Bluetooth-Geräte zeigen</button></p>
+      <p class="small muted" id="showAllRow">micro:bit nicht in der Liste? <button class="btn ghost" id="btnShowAll" type="button" style="padding:6px 12px;font-size:.95rem">Alle Bluetooth-Geräte zeigen</button></p>
       <div class="outs" id="outs"></div>
       <div class="log" id="log" aria-label="Meldungen"></div>
     </section>
@@ -278,8 +289,15 @@ ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-wi
   <section class="plate" aria-labelledby="hProg">
     <h2 id="hProg">Programm für den micro:bit</h2>
     <p class="small" style="max-width:70ch" id="progIntro"></p>
+    <h3 id="progHead" hidden>Programm für das Auto</h3>
     <div class="row"><button class="btn ghost" id="btnCopy" type="button">Programm kopieren</button><span class="small muted" id="copyMsg" aria-live="polite"></span></div>
     <pre id="progCode"></pre>
+    <div class="sub" id="senderBox" hidden>
+      <h3>Programm für den Sender (zweiter micro:bit, per USB am PC)</h3>
+      <p class="small" style="max-width:70ch">Dieser micro:bit steckt am PC. Er bekommt die Befehle der Webseite über das USB-Kabel und funkt sie an dein Auto. Die Funkgruppe stellt die Webseite beim Verbinden selbst ein, er zeigt sie dann kurz an. Er braucht nur die normale <b>radio</b>-Erweiterung, kein Bluetooth.</p>
+      <div class="row"><button class="btn ghost" id="btnCopy2" type="button">Sender-Programm kopieren</button><span class="small muted" id="copyMsg2" aria-live="polite"></span></div>
+      <pre id="progCode2"></pre>
+    </div>
   </section>
 
   <section class="plate" aria-labelledby="hHelp">
@@ -315,6 +333,18 @@ ol.steps { margin: 8px 0 0; padding-left: 1.3em; display: grid; gap: 8px; max-wi
     <details>
       <summary>4. Wo hängt was an der Platine?</summary>
       <ol class="steps" id="wiringHelp"></ol>
+    </details>
+    <details id="radioHelp" hidden>
+      <summary>5. Mit Funk am PC fahren (ohne Bluetooth)</summary>
+      <ol class="steps">
+        <li>Du brauchst einen <b>zweiten micro:bit</b> als Sender und das USB-Kabel. Der PC braucht kein Bluetooth.</li>
+        <li>Oben „Funk über USB (PC)“ wählen und eine <b>Funkgruppe</b> eintragen, die sonst niemand im Club hat, zum Beispiel deine Lieblingszahl.</li>
+        <li><b>Auto-Programm:</b> in MakeCode ein neues Projekt, nur die <b>radio</b>-Erweiterung (die ist schon da, kein Bluetooth). Auf JavaScript umschalten, das Auto-Programm einfügen und auf den micro:bit im Auto laden. Beim Einschalten zeigt er seine Funkgruppe.</li>
+        <li><b>Sender-Programm:</b> genauso, aber das Sender-Programm, und auf den zweiten micro:bit laden.</li>
+        <li>Sender per USB am PC lassen, diese Seite in <b>Chrome</b> oder <b>Edge</b> öffnen, „Sender verbinden“ klicken und „BBC micro:bit“ wählen. Der Sender zeigt kurz die Funkgruppe.</li>
+        <li>Änderst du die Funkgruppe hier, musst du nur das <b>Auto-Programm</b> neu laden. Den Sender stellt die Seite selbst um.</li>
+        <li>Fährt ein fremdes Auto mit? Dann hat es dieselbe Gruppe. Eine andere Zahl nehmen.</li>
+      </ol>
     </details>
   </section>
 </div>
@@ -402,13 +432,15 @@ function servo(s: number, deg: number) {
         steerServo: 8, steerCenter: 90, steerRange: 35, invSteer: false, turnMix: 20,
         armA: 1, armB: 2, pose1: [30, 150], pose2: [90, 90],
         btn: { 0: "honk", 1: "stop", 2: "p1", 3: "p2", 4: "lo", 5: "hi" },
+        link: "ble", group: 5,
       },
+      radio: true,
+      radioIntro: "Mit Funk steuert der PC dein Auto über einen <b>zweiten micro:bit</b>, der per USB am PC steckt. So braucht der PC kein Bluetooth. Damit nicht jeder Sender jedes Auto steuert, hat jedes Auto seine eigene <b>Funkgruppe</b>. Das Auto-Programm steuert die Omni:bit-Platine direkt an, genau wie die OmniBit-Erweiterung, und braucht nur die <b>radio</b>-Erweiterung.",
     },
   };
 
-  const programFor = (bd) => `// micro:bit Fernsteuerung – Empfänger über Bluetooth für ${bd.name}
-// Steuert den PCA9685 auf der Platine direkt (I2C 0x40), ohne Funk.
-const PCA = 0x40
+  // Gemeinsamer Teil aller Auto-Programme: PCA9685 direkt ansteuern
+  const coreFor = (bd) => `const PCA = 0x40
 let ready = false
 let lastCmd = 0
 let moving = false
@@ -446,7 +478,118 @@ function stopAll() {
     for (let m = 1; m <= 4; m++) motor(m, 0)
     moving = false
 }
+`;
+  const iconFn = `function icon(n: number) {
+    if (n == 1) basic.showIcon(IconNames.Heart, 0)
+    else if (n == 2) basic.showIcon(IconNames.Happy, 0)
+    else if (n == 3) basic.showIcon(IconNames.Sad, 0)
+    else if (n == 4) basic.showIcon(IconNames.Yes, 0)
+    else basic.clearScreen()
+}`;
 
+  // Auto-Programm für Funk: hört auf Gruppe g, Befehle kommen als kleine Datenpakete vom Sender.
+  // Paket: [1, M1, M2, M3, M4] Fahren · [2, Servo, Winkel] · [3] Not-Stopp · [4, Freq(2), Dauer(2)] Ton · [5, Bild]
+  const radioCarFor = (bd, g) => `// micro:bit Fernsteuerung – Auto mit ${bd.name}, Empfang über Funk
+// Funkgruppe ${g}: muss dieselbe sein wie auf der Webseite.
+${coreFor(bd)}let seen = false
+${iconFn}
+
+radio.setGroup(${g})
+radio.onReceivedBuffer(function (b) {
+    if (!ready) init()
+    lastCmd = control.millis()
+    if (!seen) {
+        seen = true
+        basic.showIcon(IconNames.Yes, 0)
+    }
+    const c = b[0]
+    if (c == 1 && b.length >= 5) {
+        for (let m = 1; m <= 4; m++) motor(m, b.getNumber(NumberFormat.Int8LE, m))
+        moving = true
+    } else if (c == 2 && b.length >= 3) {
+        servo(b[1], b[2])
+    } else if (c == 3) {
+        stopAll()
+        basic.showIcon(IconNames.No, 0)
+    } else if (c == 4 && b.length >= 5) {
+        music.ringTone(b.getNumber(NumberFormat.UInt16LE, 1))
+        toneOff = control.millis() + b.getNumber(NumberFormat.UInt16LE, 3)
+    } else if (c == 5 && b.length >= 2) {
+        icon(b[1])
+    }
+})
+basic.showNumber(${g})
+basic.showIcon(IconNames.SmallSquare, 0)
+
+// Sicherheit: kommt 800 ms nichts mehr, Motoren aus. Nach 2 s ohne Funk wieder Quadrat.
+basic.forever(function () {
+    const now = control.millis()
+    if (moving && now - lastCmd > 800) stopAll()
+    if (seen && now - lastCmd > 2000) {
+        seen = false
+        basic.showIcon(IconNames.SmallSquare, 0)
+    }
+    if (toneOff > 0 && now > toneOff) {
+        music.stopAllSounds()
+        toneOff = 0
+    }
+    basic.pause(50)
+})
+`;
+
+  // Sender: steckt per USB am PC, macht aus den Textzeilen der Webseite Funkpakete.
+  const senderFor = (g) => `// micro:bit Fernsteuerung – Sender am PC (USB)
+// Bekommt Befehle von der Webseite über das USB-Kabel und funkt sie ans Auto.
+// Die Webseite stellt die Funkgruppe selbst ein (Befehl G). Start: Gruppe ${g}.
+let group = ${g}
+radio.setGroup(group)
+radio.setTransmitPower(7)
+serial.setBaudRate(BaudRate.BaudRate115200)
+serial.setRxBufferSize(64)
+basic.showNumber(group)
+
+serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
+    const p = serial.readUntil(serial.delimiters(Delimiters.NewLine)).split(",")
+    const c = p[0]
+    let b: Buffer = null
+    if (c == "D" && p.length >= 5) {
+        b = pins.createBuffer(5)
+        b[0] = 1
+        for (let i = 1; i <= 4; i++) b.setNumber(NumberFormat.Int8LE, i, parseInt(p[i]))
+    } else if (c == "V" && p.length >= 3) {
+        b = pins.createBuffer(3)
+        b[0] = 2
+        b[1] = parseInt(p[1])
+        b[2] = parseInt(p[2])
+    } else if (c == "S") {
+        b = pins.createBuffer(1)
+        b[0] = 3
+    } else if (c == "T" && p.length >= 3) {
+        b = pins.createBuffer(5)
+        b[0] = 4
+        b.setNumber(NumberFormat.UInt16LE, 1, parseInt(p[1]))
+        b.setNumber(NumberFormat.UInt16LE, 3, parseInt(p[2]))
+    } else if (c == "I" && p.length >= 2) {
+        b = pins.createBuffer(2)
+        b[0] = 5
+        b[1] = parseInt(p[1])
+    } else if (c == "G" && p.length >= 2) {
+        group = parseInt(p[1])
+        radio.setGroup(group)
+        control.inBackground(function () {
+            basic.showNumber(group)
+        })
+    }
+    if (b) {
+        radio.sendBuffer(b)
+        led.toggle(4, 4)
+    }
+})
+`;
+
+  const programFor = (bd) => `// micro:bit Fernsteuerung – Empfänger über Bluetooth für ${bd.name}
+// Steuert den PCA9685 auf der Platine direkt (I2C 0x40), ohne Funk.
+${coreFor(bd)}
 // Sparsam: kein Warten im Empfang, keine Hintergrund-Aufgaben,
 // damit der Speicher (Fehler 020) reicht.
 bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () {
@@ -527,6 +670,8 @@ basic.forever(function () {
   const save = () => { try { localStorage.setItem("mb-settings-2", JSON.stringify(S)); } catch (e) {} };
   const C = () => S.cfg[S.board];
   const B = () => BOARDS[S.board];
+  const radioMode = () => !!B().radio && C().link === "radio";
+  const groupOf = () => Math.max(0, Math.min(255, Math.round(+C().group || 0)));
 
   const opts = (list, withOff) => (withOff ? `<option value="0">aus</option>` : "") + list.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
   for (const id of ["steerServo", "armA", "armB"]) $(id).innerHTML = opts(SERVOS, true);
@@ -556,11 +701,34 @@ basic.forever(function () {
     $("invSteer").checked = c.invSteer;
     [["p1a", "pose1", 0], ["p1b", "pose1", 1], ["p2a", "pose2", 0], ["p2b", "pose2", 1]].forEach(([id, k, j]) => { $(id).value = c[k][j]; $(id).max = bd.maxDeg; });
     for (const [k] of MAPPABLE) $("map" + k).value = c.btn[k] || "none";
-    $("progCode").textContent = programFor(bd);
-    $("progIntro").innerHTML = bd.intro;
+    renderLink();
     $("wiringHelp").innerHTML = bd.wiring.concat(["Not-Stopp: roter Knopf, Taste B, Leertaste oder die Verbindung trennen. Kommt fast eine Sekunde nichts an, halten die Motoren von selbst an."]).map((t) => `<li>${t}</li>`).join("");
     renderOuts(); refreshLabels();
     lastD = ""; lastV = "";
+  }
+  // Bluetooth oder Funk: Knöpfe, Programme und Hilfe passend zeigen
+  function renderLink() {
+    const bd = B(), r = radioMode();
+    $("linkRow").hidden = !bd.radio;
+    $("linkBle").setAttribute("aria-pressed", !r);
+    $("linkRadio").setAttribute("aria-pressed", r);
+    $("groupRow").hidden = !r;
+    $("radioGroup").value = groupOf();
+    $("showAllRow").hidden = r;
+    $("radioHelp").hidden = !bd.radio;
+    $("senderBox").hidden = !r;
+    $("progHead").hidden = !r;
+    $("btnConnect").textContent = r ? "Sender verbinden (USB)" : "micro:bit verbinden";
+    $("progCode").textContent = r ? radioCarFor(bd, groupOf()) : programFor(bd);
+    $("progCode2").textContent = r ? senderFor(groupOf()) : "";
+    $("progIntro").innerHTML = r ? bd.radioIntro : bd.intro;
+    updateChip();
+  }
+  function setLink(mode) {
+    if (C().link === mode) return;
+    if (L().connected) { log("Erst trennen, dann die Verbindung wechseln."); return; }
+    C().link = mode; save(); renderLink(); checkEnv();
+    log(mode === "radio" ? `Funk über USB, Gruppe ${groupOf()}. Auf das Auto muss das Funk-Programm.` : "Bluetooth. Auf das Auto muss das Bluetooth-Programm.");
   }
   function renderOuts() {
     const bd = B(), c = C();
@@ -580,12 +748,21 @@ basic.forever(function () {
   }
   function setBoard(b) {
     if (b === S.board) return;
+    if (L().connected) { log("Erst trennen, dann die Platine wechseln."); return; }
     S.board = b; save(); renderBoard();
     log(`Platine: ${B().name}. Zum Fahren muss das passende Programm auf dem micro:bit sein.`);
   }
   function bindSettings() {
     $("boardSg").addEventListener("click", () => setBoard("sg"));
     $("boardOmni").addEventListener("click", () => setBoard("omni"));
+    $("linkBle").addEventListener("click", () => setLink("ble"));
+    $("linkRadio").addEventListener("click", () => setLink("radio"));
+    $("radioGroup").addEventListener("change", () => {
+      C().group = Math.max(0, Math.min(255, Math.round(+$("radioGroup").value || 0)));
+      save(); renderLink();
+      log(`Funkgruppe ${groupOf()}. Das Auto-Programm neu auf das Auto laden.`);
+      if (Ser.connected) Ser.line("G," + groupOf(), true);
+    });
     for (const id of ["gasSrc", "steerSrc", "extraSrc"]) {
       $(id).value = S[id];
       $(id).addEventListener("change", () => { S[id] = $(id).value; save(); });
@@ -623,13 +800,17 @@ basic.forever(function () {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     let policy = null;
     try { const fp = document.permissionsPolicy || document.featurePolicy; if (fp) policy = fp.allowsFeature("bluetooth"); } catch (e) {}
-    if (!navigator.bluetooth) {
+    if (radioMode()) {
+      if (!navigator.serial) msgs.push(isIOS
+        ? "<b>Funk über USB geht nur am Computer.</b> Auf dem iPad oben „Bluetooth (iPad)“ wählen."
+        : "<b>Dieser Browser kann nicht mit USB-Geräten reden.</b> Nimm am Computer Chrome oder Edge.");
+    } else if (!navigator.bluetooth) {
       msgs.push(isIOS
         ? "<b>Dieser Browser kann kein Bluetooth für Webseiten.</b> Safari auf dem iPad kann das leider nicht. Öffne diese Seite in der App <b>Bluefy – Web BLE Browser</b> (kostenlos im App Store)."
         : "<b>Dieser Browser kann kein Bluetooth für Webseiten.</b> Auf dem iPad: Bluefy nehmen. Am Computer: Chrome oder Edge.");
     }
-    if (/claudeusercontent\.com$/.test(location.hostname) || policy === false) {
-      msgs.push("<b>Auf claude.ai ist Bluetooth für diese Seite gesperrt.</b> Hier kannst du alles ansehen und einstellen, aber nicht verbinden. Zum Fahren muss dieselbe Seite auf einer eigenen Webadresse liegen, zum Beispiel GitHub Pages.");
+    if (/claudeusercontent\.com$/.test(location.hostname) || (!radioMode() && policy === false)) {
+      msgs.push("<b>Auf claude.ai ist Bluetooth und USB für diese Seite gesperrt.</b> Hier kannst du alles ansehen und einstellen, aber nicht verbinden. Zum Fahren muss dieselbe Seite auf einer eigenen Webadresse liegen, zum Beispiel GitHub Pages.");
     }
     if (!navigator.getGamepads) {
       msgs.push("Dieser Browser gibt keinen Controller an Webseiten weiter. Nimm die Tastatur (WASD) oder setze bei „Controller“ den Haken für die Finger-Steuerung.");
@@ -692,30 +873,64 @@ basic.forever(function () {
     reset() { this.device = null; this.rx = null; this.busy = false; },
   };
 
+  // ---------- Sender-micro:bit über USB (Web Serial), funkt ans Auto ----------
+  const Ser = {
+    port: null, writer: null, busy: false,
+    get connected() { return !!this.writer; },
+    async connect() {
+      this.port = await navigator.serial.requestPort({ filters: [{ usbVendorId: 0x0d28 }] });
+      await this.port.open({ baudRate: 115200 });
+      // Erst die Funkgruppe setzen, dann gilt die Verbindung als offen (sonst funkt er vorher auf der alten Gruppe)
+      const w = this.port.writable.getWriter();
+      await new Promise((r) => setTimeout(r, 300));
+      await w.write(enc.encode("G," + groupOf() + "\n"));
+      this.writer = w;
+      log(`Sender verbunden. Funkgruppe ${groupOf()}.`);
+    },
+    async line(text, force) {
+      if (!this.writer || (this.busy && !force)) return false;
+      while (this.busy) await new Promise((r) => setTimeout(r, 5));
+      this.busy = true;
+      try { await this.writer.write(enc.encode(text + "\n")); return true; }
+      catch (e) { log("Senden ging nicht: " + e.message); return false; }
+      finally { this.busy = false; }
+    },
+    async disconnect() {
+      try { if (this.writer) await this.line("S", true); } catch (e) {}
+      try { if (this.writer) this.writer.releaseLock(); } catch (e) {}
+      try { if (this.port) await this.port.close(); } catch (e) {}
+    },
+    reset() { this.port = null; this.writer = null; this.busy = false; },
+  };
+  if (navigator.serial) navigator.serial.addEventListener("disconnect", (e) => { if (e.target === Ser.port) onLost(); });
+  const L = () => (radioMode() ? Ser : Bit);
+
   function updateChip() {
-    const c = Bit.connected;
+    const c = L().connected, who = radioMode() ? "Sender" : "micro:bit";
     $("chipBit").className = "chip " + (c ? "ok" : "");
-    $("chipBitTxt").textContent = c ? "micro:bit: verbunden" : "micro:bit: nicht verbunden";
+    $("chipBitTxt").textContent = `${who}: ${c ? "verbunden" : "nicht verbunden"}`;
     $("btnConnect").disabled = c; $("btnDisconnect").disabled = !c;
   }
-  function onLost() { log("Verbindung zum micro:bit weg."); Bit.reset(); updateChip(); }
+  function onLost() { log(radioMode() ? "Verbindung zum Sender weg." : "Verbindung zum micro:bit weg."); L().reset(); updateChip(); }
 
   async function connect(showAll) {
-    if (!navigator.bluetooth) { checkEnv(); log("Kein Bluetooth in diesem Browser."); return; }
-    $("btnConnect").disabled = true; $("chipBit").className = "chip wait"; $("chipBitTxt").textContent = "micro:bit: verbinde …";
-    try { await Bit.connect(showAll); lastD = ""; lastV = ""; }
+    const r = radioMode();
+    if (r ? !navigator.serial : !navigator.bluetooth) { checkEnv(); log(r ? "Kein USB in diesem Browser." : "Kein Bluetooth in diesem Browser."); return; }
+    $("btnConnect").disabled = true; $("chipBit").className = "chip wait"; $("chipBitTxt").textContent = (r ? "Sender" : "micro:bit") + ": verbinde …";
+    try { await (r ? Ser.connect() : Bit.connect(showAll)); lastD = ""; lastV = ""; }
     catch (e) {
-      if (e && e.name === "NotFoundError") log("Kein micro:bit gewählt.");
-      else if (e && e.name === "SecurityError") log("Bluetooth ist hier gesperrt. Seite in eigenem Tab öffnen.");
+      if (e && e.name === "NotFoundError") log(r ? "Kein Sender gewählt. Steckt der micro:bit am USB?" : "Kein micro:bit gewählt.");
+      else if (e && e.name === "SecurityError") log("Bluetooth und USB sind hier gesperrt. Seite in eigenem Tab öffnen.");
+      else if (e && e.name === "InvalidStateError") log("Der Sender ist schon offen, zum Beispiel in MakeCode. Dort trennen und nochmal versuchen.");
       else log("Verbinden ging nicht: " + (e && e.message ? e.message : e));
-      try { await Bit.disconnect(); } catch (_) {}
-      Bit.reset();
+      try { await L().disconnect(); } catch (_) {}
+      L().reset();
     }
     updateChip();
   }
   $("btnConnect").addEventListener("click", () => connect(false));
   $("btnShowAll").addEventListener("click", () => connect(true));
-  $("btnDisconnect").addEventListener("click", async () => { await Bit.disconnect(); Bit.reset(); updateChip(); log("Getrennt."); });
+  $("btnDisconnect").addEventListener("click", async () => { await L().disconnect(); L().reset(); updateChip(); log("Getrennt."); });
 
   // ---------- Not-Stopp ----------
   let locked = false;
@@ -724,7 +939,7 @@ basic.forever(function () {
     locked = true;
     $("btnStop").classList.add("locked"); $("stopTxt").textContent = "WEITER";
     log("NOT-STOPP!");
-    if (Bit.connected) await Bit.line("S", true);
+    if (L().connected) await L().line("S", true);
   }
   function release() {
     locked = false;
@@ -735,18 +950,19 @@ basic.forever(function () {
 
   async function action(a) {
     if (a === "stop") return locked ? release() : emergency();
-    if (!Bit.connected || a === "none") return;
-    if (a === "honk") { await Bit.line("T,440,150", true); setTimeout(() => Bit.line("T,440,150", true), 250); }
-    else if (a === "hi") await Bit.line("T,880,150", true);
-    else if (a === "lo") await Bit.line("T,262,200", true);
+    const k = L();
+    if (!k.connected || a === "none") return;
+    if (a === "honk") { await k.line("T,440,150", true); setTimeout(() => k.line("T,440,150", true), 250); }
+    else if (a === "hi") await k.line("T,880,150", true);
+    else if (a === "lo") await k.line("T,262,200", true);
     else if (a === "p1" || a === "p2") {
       if (locked) return;
       const c = C(), pose = a === "p1" ? c.pose1 : c.pose2;
-      if (c.armA) await Bit.line(`V,${c.armA},${pose[0]}`, true);
-      if (c.armB) await Bit.line(`V,${c.armB},${pose[1]}`, true);
+      if (c.armA) await k.line(`V,${c.armA},${pose[0]}`, true);
+      if (c.armB) await k.line(`V,${c.armB},${pose[1]}`, true);
       if (!c.armA && !c.armB) log("Kein Arm-Servo eingestellt (Belegung → Arm oder Greifer).");
     }
-    else await Bit.line("I," + a, true);
+    else await k.line("I," + a, true);
   }
 
   // ---------- Tastatur (WASD) ----------
@@ -852,15 +1068,17 @@ basic.forever(function () {
   // Lenkservo nur, wenn sich der Winkel ändert.
   let lastD = "", lastDTime = 0, lastV = "", sending = false;
   setInterval(async () => {
-    if (!Bit.connected || locked || sending) return;
+    const k = L();
+    if (!k.connected || locked || sending) return;
     sending = true;
     try {
       const now = performance.now();
       const d = "D," + out.m.join(",");
-      if (d !== lastD || now - lastDTime > 300) { if (await Bit.line(d)) { lastD = d; lastDTime = now; } }
+      if (d !== lastD || now - lastDTime > 300) { if (await k.line(d)) { lastD = d; lastDTime = now; } }
       const sv = C().steerServo;
       const v = sv ? `V,${sv},${out.angle}` : "";
-      if (v && v !== lastV) { if (await Bit.line(v)) lastV = v; }
+      // Über Funk kann ein Paket verloren gehen, darum den Lenkwinkel dort mit dem Lebenszeichen wiederholen.
+      if (v && (v !== lastV || (radioMode() && lastDTime === now))) { if (await k.line(v)) lastV = v; }
     } finally { sending = false; }
   }, 100);
 
@@ -889,19 +1107,22 @@ basic.forever(function () {
     }
   }
 
-  $("btnCopy").addEventListener("click", () => {
-    const fallback = () => {
-      const r = document.createRange(); r.selectNodeContents($("progCode"));
-      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
-      $("copyMsg").textContent = "Text ist markiert. Jetzt kopieren.";
-    };
-    try { navigator.clipboard.writeText(programFor(B())).then(() => { $("copyMsg").textContent = "Kopiert."; }, fallback); } catch (e) { fallback(); }
-  });
+  for (const [btn, pre, msg] of [["btnCopy", "progCode", "copyMsg"], ["btnCopy2", "progCode2", "copyMsg2"]]) {
+    $(btn).addEventListener("click", () => {
+      const fallback = () => {
+        const r = document.createRange(); r.selectNodeContents($(pre));
+        const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        $(msg).textContent = "Text ist markiert. Jetzt kopieren.";
+      };
+      try { navigator.clipboard.writeText($(pre).textContent).then(() => { $(msg).textContent = "Kopiert."; }, fallback); } catch (e) { fallback(); }
+    });
+  }
 
-  document.addEventListener("visibilitychange", () => { if (document.hidden && Bit.connected && !locked) emergency(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden && L().connected && !locked) emergency(); });
 
   bindSettings(); renderBoard(); checkEnv(); setupTouch(); updateChip();
   window.__mbState = () => ({ out, board: S.board, keys: [...keys] });
+  window.__mbRadio = { car: radioCarFor, sender: senderFor };
   log("Seite geladen.");
   requestAnimationFrame(frame);
 })();
